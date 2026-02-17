@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { configAPI } from '../api'
+import { applyCustomScripts } from '../utils/customScripts'
 
 export const useAppStore = defineStore('app', () => {
     const locale = ref(localStorage.getItem('locale') || 'zh-CN')
@@ -62,6 +63,7 @@ export const useAppStore = defineStore('app', () => {
     const loadConfig = async (force = false) => {
         if (config.value && !force) {
             applySEO()
+            applyCustomScripts(config.value?.scripts)
             return
         }
         loading.value = true
@@ -69,6 +71,7 @@ export const useAppStore = defineStore('app', () => {
             const response = await configAPI.get()
             config.value = response.data.data
             applySEO()
+            applyCustomScripts(config.value?.scripts)
         } catch (error) {
             console.error('Failed to load config:', error)
         } finally {

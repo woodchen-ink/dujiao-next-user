@@ -225,6 +225,7 @@ import { walletAPI } from '../../api'
 import { useAppStore } from '../../stores/app'
 import { pageAlertClass, type PageAlert } from '../../utils/alerts'
 import { amountToCents } from '../../utils/money'
+import QRCode from 'qrcode'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -278,16 +279,41 @@ const formatMoney = (amount?: string, currency?: string) => {
   return `${amount} ${currency}`
 }
 
-const balanceDisplay = computed(() => formatMoney(wallet.value?.balance, 'CNY'))
+const balanceDisplay = computed(() => formatMoney(wallet.value?.balance, String(appStore.config?.currency || 'CNY')))
 const payLink = computed(() => String(currentRechargePayment.value?.pay_url || '').trim())
-const qrImageUrl = computed(() => {
+const qrImageUrl = ref('')
+const qrRenderVersion = ref(0)
+
+const renderQRCodeImage = async () => {
   const qr = String(currentRechargePayment.value?.qr_code || '').trim()
-  if (!qr) return ''
-  if (qr.startsWith('data:image/')) return qr
+  const currentVersion = qrRenderVersion.value + 1
+  qrRenderVersion.value = currentVersion
+  if (!qr) {
+    qrImageUrl.value = ''
+    return
+  }
+  if (qr.startsWith('data:image/')) {
+    qrImageUrl.value = qr
+    return
+  }
   const isImageURL = /^https?:\/\/.+\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(qr)
-  if (isImageURL) return qr
-  return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qr)}`
-})
+  if (isImageURL) {
+    qrImageUrl.value = qr
+    return
+  }
+  try {
+    const dataURL = await QRCode.toDataURL(qr, {
+      width: 240,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+    })
+    if (currentVersion !== qrRenderVersion.value) return
+    qrImageUrl.value = dataURL
+  } catch {
+    if (currentVersion !== qrRenderVersion.value) return
+    qrImageUrl.value = ''
+  }
+}
 const isRechargePending = computed(() => {
   const status = String(currentRecharge.value?.status || '').toLowerCase()
   return status === 'pending' || status === 'initiated'
@@ -551,6 +577,14 @@ watch(
       }
       rechargeForm.channelId = first.id
     }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => currentRechargePayment.value?.qr_code,
+  () => {
+    void renderQRCodeImage()
   },
   { immediate: true }
 )

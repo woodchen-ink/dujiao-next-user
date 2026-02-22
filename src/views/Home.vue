@@ -202,13 +202,13 @@
                 <div class="flex flex-col">
                   <span class="text-xs theme-text-muted uppercase tracking-wider">{{ t('products.price') }}</span>
                   <span v-if="hasPromotionPrice(product)" class="text-lg font-bold text-rose-600 dark:text-rose-300 font-mono">
-                    {{ formatPrice(getPromotionPriceAmount(product), product.price_currency) }}
+                    {{ formatPrice(getPromotionPriceAmount(product), siteCurrency) }}
                   </span>
                   <span v-else class="text-lg font-bold theme-text-primary font-mono">
-                    {{ formatPrice(product.price_amount, product.price_currency) }}
+                    {{ formatPrice(product.price_amount, siteCurrency) }}
                   </span>
                   <div v-if="hasPromotionPrice(product)" class="mt-0.5 flex flex-wrap items-center gap-1.5">
-                    <span class="text-xs theme-text-muted opacity-80 line-through">{{ formatPrice(product.price_amount, product.price_currency) }}</span>
+                    <span class="text-xs theme-text-muted opacity-80 line-through">{{ formatPrice(product.price_amount, siteCurrency) }}</span>
                     <span class="theme-badge theme-badge-danger theme-badge-xs">
                       {{ t('products.promotionTag') }}
                     </span>
@@ -285,6 +285,11 @@ const getLocalizedText = (jsonData: any) => {
   const locale = appStore.locale
   return jsonData[locale] || jsonData['zh-CN'] || jsonData['en-US'] || ''
 }
+
+const siteCurrency = computed(() => {
+  const raw = String(appStore.config?.currency || '').trim().toUpperCase()
+  return /^[A-Z]{3}$/.test(raw) ? raw : 'CNY'
+})
 
 const getPurchaseTypeLabel = (purchaseType: string) => {
   return purchaseType === 'guest' ? t('productPurchase.guest') : t('productPurchase.member')

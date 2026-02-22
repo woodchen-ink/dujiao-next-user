@@ -131,20 +131,20 @@
                   <div v-if="hasPromotionPrice(product)" class="space-y-2">
                     <div class="flex flex-wrap items-end gap-4">
                       <span class="text-5xl font-mono font-bold text-rose-600 dark:text-rose-300">
-                        {{ formatPrice(getPromotionPriceAmount(product), product.price_currency) }}
+                        {{ formatPrice(getPromotionPriceAmount(product), siteCurrency) }}
                       </span>
                       <span class="text-base font-medium theme-text-muted opacity-80 line-through">
-                        {{ formatPrice(product.price_amount, product.price_currency) }}
+                        {{ formatPrice(product.price_amount, siteCurrency) }}
                       </span>
                     </div>
                     <p class="text-sm font-medium text-rose-500 dark:text-rose-300">
-                      {{ t('products.saveAmount') }} {{ formatPrice(getPromotionSaveAmount(product), product.price_currency) }}
+                      {{ t('products.saveAmount') }} {{ formatPrice(getPromotionSaveAmount(product), siteCurrency) }}
                     </p>
                   </div>
                   <div v-else class="flex items-end gap-4">
                     <span
                       class="text-5xl font-mono font-bold theme-text-accent">
-                      {{ formatPrice(product.price_amount, product.price_currency) }}
+                      {{ formatPrice(product.price_amount, siteCurrency) }}
                     </span>
                   </div>
                 </div>
@@ -294,6 +294,11 @@ const getLocalizedText = (jsonData: any) => {
   return jsonData[locale] || jsonData['zh-CN'] || jsonData['en-US'] || ''
 }
 
+const siteCurrency = computed(() => {
+  const raw = String(appStore.config?.currency || '').trim().toUpperCase()
+  return /^[A-Z]{3}$/.test(raw) ? raw : 'CNY'
+})
+
 const getPurchaseTypeLabel = (purchaseType: string) => {
   return purchaseType === 'guest' ? t('productPurchase.guest') : t('productPurchase.member')
 }
@@ -372,7 +377,6 @@ const addToCart = () => {
     slug: product.value.slug,
     title: product.value.title,
     priceAmount: product.value.price_amount,
-    priceCurrency: product.value.price_currency,
     image: images.value[0],
     purchaseType: product.value.purchase_type,
     fulfillmentType: product.value.fulfillment_type,

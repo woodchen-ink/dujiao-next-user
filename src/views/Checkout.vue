@@ -332,10 +332,16 @@ const totalAmount = computed(() => {
   return centsToAmount(totalCents)
 })
 
+const siteCurrency = computed(() => {
+  const raw = String(appStore.config?.currency || '').trim().toUpperCase()
+  return /^[A-Z]{3}$/.test(raw) ? raw : ''
+})
+
 const totalCurrency = computed(() => {
-  const currencies = cartItems.value.map(item => item.priceCurrency).filter(Boolean)
-  const unique = Array.from(new Set(currencies))
-  return unique.length === 1 ? unique[0] : ''
+  if (siteCurrency.value) {
+    return siteCurrency.value
+  }
+  return 'CNY'
 })
 
 const previewCurrency = computed(() => preview.value?.currency || totalCurrency.value)
@@ -899,8 +905,8 @@ const itemSubtotal = (item: CartItem) => {
   const amountCents = amountToCents(item.priceAmount)
   const qty = parseInteger(item.quantity)
   if (amountCents === null || qty === null) {
-    return formatPrice('-', item.priceCurrency)
+    return formatPrice('-', totalCurrency.value)
   }
-  return formatPrice(centsToAmount(amountCents * qty), item.priceCurrency)
+  return formatPrice(centsToAmount(amountCents * qty), totalCurrency.value)
 }
 </script>

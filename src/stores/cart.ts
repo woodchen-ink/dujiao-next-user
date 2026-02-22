@@ -6,7 +6,6 @@ export interface CartItem {
     slug: string
     title: any
     priceAmount: string
-    priceCurrency: string
     image?: string
     quantity: number
     purchaseType?: string
@@ -44,7 +43,6 @@ export const useCartStore = defineStore('cart', () => {
             existing.slug = item.slug
             existing.title = item.title
             existing.priceAmount = item.priceAmount
-            existing.priceCurrency = item.priceCurrency
             existing.image = item.image
             existing.purchaseType = item.purchaseType
             existing.fulfillmentType = item.fulfillmentType

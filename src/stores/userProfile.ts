@@ -5,6 +5,8 @@ import type {
     ChangeEmailPayload,
     ChangeUserPasswordPayload,
     SendChangeEmailCodePayload,
+    TelegramAuthPayload,
+    TelegramBindingData,
     UpdateUserProfilePayload,
     UserLoginLogItem,
     UserProfileData,
@@ -33,11 +35,15 @@ export const useUserProfileStore = defineStore('user-profile', () => {
     const profile = ref<UserProfileData | null>(null)
     const recentOrders = ref<PersonalOrderSummary[]>([])
     const recentLoginLogs = ref<UserLoginLogItem[]>([])
+    const telegramBinding = ref<TelegramBindingData | null>(null)
 
     const loadingProfile = ref(false)
     const savingProfile = ref(false)
     const loadingOrders = ref(false)
     const loadingLoginLogs = ref(false)
+    const loadingTelegramBinding = ref(false)
+    const bindingTelegram = ref(false)
+    const unbindingTelegram = ref(false)
     const sendingCode = ref(false)
     const changingEmail = ref(false)
     const changingPassword = ref(false)
@@ -171,14 +177,64 @@ export const useUserProfileStore = defineStore('user-profile', () => {
         }
     }
 
+    const loadTelegramBinding = async () => {
+        loadingTelegramBinding.value = true
+        clearSecurityError()
+        try {
+            const response = await userProfileAPI.getTelegramBinding()
+            telegramBinding.value = response.data.data || { bound: false }
+            return true
+        } catch (error) {
+            telegramBinding.value = null
+            securityError.value = normalizeErrorMessage(error, '加载 Telegram 绑定信息失败')
+            return false
+        } finally {
+            loadingTelegramBinding.value = false
+        }
+    }
+
+    const bindTelegram = async (payload: TelegramAuthPayload) => {
+        bindingTelegram.value = true
+        clearSecurityError()
+        try {
+            const response = await userProfileAPI.bindTelegram(payload)
+            telegramBinding.value = response.data.data || { bound: true }
+            return true
+        } catch (error) {
+            securityError.value = normalizeErrorMessage(error, '绑定 Telegram 失败')
+            return false
+        } finally {
+            bindingTelegram.value = false
+        }
+    }
+
+    const unbindTelegram = async () => {
+        unbindingTelegram.value = true
+        clearSecurityError()
+        try {
+            await userProfileAPI.unbindTelegram()
+            telegramBinding.value = { bound: false }
+            return true
+        } catch (error) {
+            securityError.value = normalizeErrorMessage(error, '解绑 Telegram 失败')
+            return false
+        } finally {
+            unbindingTelegram.value = false
+        }
+    }
+
     return {
         profile,
         recentOrders,
         recentLoginLogs,
+        telegramBinding,
         loadingProfile,
         savingProfile,
         loadingOrders,
         loadingLoginLogs,
+        loadingTelegramBinding,
+        bindingTelegram,
+        unbindingTelegram,
         sendingCode,
         changingEmail,
         changingPassword,
@@ -194,5 +250,8 @@ export const useUserProfileStore = defineStore('user-profile', () => {
         changePassword,
         loadRecentOrders,
         loadRecentLoginLogs,
+        loadTelegramBinding,
+        bindTelegram,
+        unbindTelegram,
     }
 })

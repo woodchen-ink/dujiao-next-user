@@ -208,6 +208,8 @@ export interface UserProfileData {
     nickname: string
     email_verified_at?: string | null
     locale: string
+    email_change_mode?: 'bind_only' | 'change_with_old_and_new'
+    password_change_mode?: 'set_without_old' | 'change_with_old'
 }
 
 export interface UpdateUserProfilePayload {
@@ -234,13 +236,33 @@ export interface SendChangeEmailCodePayload {
 
 export interface ChangeEmailPayload {
     new_email: string
-    old_code: string
+    old_code?: string
     new_code: string
 }
 
 export interface ChangeUserPasswordPayload {
-    old_password: string
+    old_password?: string
     new_password: string
+}
+
+export interface TelegramAuthPayload {
+    id: number
+    first_name?: string
+    last_name?: string
+    username?: string
+    photo_url?: string
+    auth_date: number
+    hash: string
+}
+
+export interface TelegramBindingData {
+    bound: boolean
+    provider?: string
+    provider_user_id?: string
+    username?: string
+    avatar_url?: string
+    auth_at?: string | null
+    updated_at?: string | null
 }
 
 export interface WalletAccountData {
@@ -392,12 +414,16 @@ export const userProfileAPI = {
     sendChangeEmailCode: (data: SendChangeEmailCodePayload) => userApi.post<ApiResponse<{ sent: boolean }>>('/me/email/send-verify-code', data),
     changeEmail: (data: ChangeEmailPayload) => userApi.post<ApiResponse<UserProfileData>>('/me/email/change', data),
     changePassword: (data: ChangeUserPasswordPayload) => userApi.put<ApiResponse<{ updated: boolean }>>('/me/password', data),
+    getTelegramBinding: () => userApi.get<ApiResponse<TelegramBindingData>>('/me/telegram'),
+    bindTelegram: (data: TelegramAuthPayload) => userApi.post<ApiResponse<TelegramBindingData>>('/me/telegram/bind', data),
+    unbindTelegram: () => userApi.delete<ApiResponse<{ unbound: boolean }>>('/me/telegram/unbind'),
 }
 
 export const userAuthAPI = {
     sendVerifyCode: (data: any) => userApi.post<ApiResponse>('/auth/send-verify-code', data),
     register: (data: any) => userApi.post<ApiResponse>('/auth/register', data),
     login: (data: any) => userApi.post<ApiResponse>('/auth/login', data),
+    telegramLogin: (data: TelegramAuthPayload) => userApi.post<ApiResponse>('/auth/telegram/login', data),
     forgotPassword: (data: any) => userApi.post<ApiResponse>('/auth/forgot-password', data),
 }
 

@@ -100,6 +100,18 @@
           >
             {{ userAuthStore.loading ? t('auth.login.submitting') : t('auth.login.submit') }}
           </button>
+
+          <div v-if="telegramEnabled" class="space-y-3 pt-1">
+            <div class="flex items-center gap-3 text-[11px] uppercase tracking-[0.12em] theme-text-muted">
+              <span class="h-px flex-1 border-t border-gray-200/80 dark:border-white/10"></span>
+              <span>{{ t('auth.login.telegramOr') }}</span>
+              <span class="h-px flex-1 border-t border-gray-200/80 dark:border-white/10"></span>
+            </div>
+            <div ref="telegramWidgetRef" class="flex justify-center"></div>
+            <p class="text-center text-xs theme-text-muted">
+              {{ t('auth.login.telegramHint') }}
+            </p>
+          </div>
         </form>
       </div>
 
@@ -116,13 +128,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserAuthStore } from '../../stores/userAuth'
 import { useI18n } from 'vue-i18n'
 import { debounceAsync } from '../../utils/debounce'
 import { useAppStore } from '../../stores/app'
-import type { CaptchaPayload } from '../../api'
+import type { CaptchaPayload, TelegramAuthPayload } from '../../api'
 import ImageCaptcha from '../../components/captcha/ImageCaptcha.vue'
 import TurnstileCaptcha from '../../components/captcha/TurnstileCaptcha.vue'
 
@@ -141,11 +153,16 @@ const captchaPayload = ref<CaptchaPayload>({})
 const turnstileToken = ref('')
 const imageCaptchaRef = ref<InstanceType<typeof ImageCaptcha> | null>(null)
 const turnstileRef = ref<InstanceType<typeof TurnstileCaptcha> | null>(null)
+const telegramWidgetRef = ref<HTMLDivElement | null>(null)
 
 const captchaConfig = computed(() => appStore.config?.captcha || null)
 const captchaProvider = computed(() => String(captchaConfig.value?.provider || 'none'))
 const loginCaptchaEnabled = computed(() => !!captchaConfig.value?.scenes?.login && captchaProvider.value !== 'none')
 const turnstileSiteKey = computed(() => String(captchaConfig.value?.turnstile?.site_key || ''))
+const telegramConfig = computed(() => appStore.config?.telegram_auth || null)
+const telegramBotUsername = computed(() => String(telegramConfig.value?.bot_username || '').trim())
+const telegramEnabled = computed(() => !!telegramConfig.value?.enabled && telegramBotUsername.value !== '')
+const telegramCallbackName = '__dujiaoUserTelegramLogin'
 
 const getCaptchaPayload = (): CaptchaPayload | undefined => {
   if (!loginCaptchaEnabled.value) return undefined
@@ -210,8 +227,71 @@ const performLogin = async () => {
 
 const handleLogin = debounceAsync(performLogin, 200)
 
+const buildTelegramPayload = (raw: any): TelegramAuthPayload | null => {
+  const id = Number(raw?.id)
+  const authDate = Number(raw?.auth_date)
+  const hash = String(raw?.hash || '').trim()
+  if (!Number.isFinite(id) || id <= 0 || !Number.isFinite(authDate) || authDate <= 0 || hash === '') {
+    return null
+  }
+  return {
+    id,
+    first_name: String(raw?.first_name || '').trim(),
+    last_name: String(raw?.last_name || '').trim(),
+    username: String(raw?.username || '').trim(),
+    photo_url: String(raw?.photo_url || '').trim(),
+    auth_date: authDate,
+    hash,
+  }
+}
+
+const handleTelegramAuth = async (raw: any) => {
+  error.value = ''
+  const payload = buildTelegramPayload(raw)
+  if (!payload) {
+    error.value = t('auth.login.telegramInvalidPayload')
+    return
+  }
+  try {
+    await userAuthStore.telegramLogin(payload)
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/me/orders'
+    router.push(redirect)
+  } catch (err: any) {
+    error.value = err.message || t('auth.login.telegramLoginFailed')
+  }
+}
+
+const clearTelegramWidget = () => {
+  if (telegramWidgetRef.value) {
+    telegramWidgetRef.value.innerHTML = ''
+  }
+}
+
+const renderTelegramWidget = () => {
+  if (!telegramEnabled.value || !telegramWidgetRef.value) {
+    clearTelegramWidget()
+    return
+  }
+  clearTelegramWidget()
+  const script = document.createElement('script')
+  script.async = true
+  script.src = 'https://telegram.org/js/telegram-widget.js?22'
+  script.setAttribute('data-telegram-login', telegramBotUsername.value)
+  script.setAttribute('data-size', 'large')
+  script.setAttribute('data-userpic', 'false')
+  script.setAttribute('data-request-access', 'write')
+  script.setAttribute('data-onauth', `${telegramCallbackName}(user)`)
+  script.onerror = () => {
+    error.value = t('auth.login.telegramWidgetLoadFailed')
+  }
+  telegramWidgetRef.value.appendChild(script)
+}
+
 onMounted(async () => {
   await appStore.loadConfig(true)
+  const win = window as Window & Record<string, any>
+  win[telegramCallbackName] = handleTelegramAuth
+  renderTelegramWidget()
 
   const reason = typeof route.query.reason === 'string' ? route.query.reason : ''
   if (reason === 'password_changed') {
@@ -220,5 +300,15 @@ onMounted(async () => {
     delete nextQuery.reason
     router.replace({ path: route.path, query: nextQuery })
   }
+})
+
+watch([telegramEnabled, telegramBotUsername], () => {
+  renderTelegramWidget()
+})
+
+onUnmounted(() => {
+  const win = window as Window & Record<string, any>
+  delete win[telegramCallbackName]
+  clearTelegramWidget()
 })
 </script>

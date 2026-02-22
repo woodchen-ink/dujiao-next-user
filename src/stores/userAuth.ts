@@ -79,6 +79,19 @@ export const useUserAuthStore = defineStore('user-auth', () => {
         }
     }
 
+    const telegramLogin = async (payload: any) => {
+        loading.value = true
+        try {
+            const response = await userAuthAPI.telegramLogin(payload)
+            const { token: accessToken, user: userData } = response.data.data
+            setToken(accessToken)
+            setUser(userData)
+            return true
+        } finally {
+            loading.value = false
+        }
+    }
+
     const forgotPassword = async (payload: any) => {
         loading.value = true
         try {
@@ -95,6 +108,8 @@ export const useUserAuthStore = defineStore('user-auth', () => {
         nickname?: string
         locale?: string
         email_verified_at?: string | null
+        email_change_mode?: 'bind_only' | 'change_with_old_and_new'
+        password_change_mode?: 'set_without_old' | 'change_with_old'
     }) => {
         const nextUser = { ...(user.value || {}), ...profile }
         setUser(nextUser)
@@ -113,6 +128,7 @@ export const useUserAuthStore = defineStore('user-auth', () => {
         sendVerifyCode,
         register,
         login,
+        telegramLogin,
         forgotPassword,
         syncUserProfile,
         logout,

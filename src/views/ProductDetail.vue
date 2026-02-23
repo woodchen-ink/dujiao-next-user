@@ -124,11 +124,17 @@
                 <div class="mb-8 border-b theme-border pb-8">
                   <div class="mb-3 flex flex-wrap items-center gap-2">
                     <span class="text-sm theme-text-muted">{{ t('products.price') }}</span>
-                    <span v-if="hasPromotionPrice(product)" class="theme-badge theme-badge-danger">
+                    <span v-if="!selectedSku && hasPromotionPrice(product)" class="theme-badge theme-badge-danger">
                       {{ t('products.promotionTag') }}
                     </span>
                   </div>
-                  <div v-if="hasPromotionPrice(product)" class="space-y-2">
+                  <div v-if="selectedSku" class="flex items-end gap-4">
+                    <span
+                      class="text-5xl font-mono font-bold theme-text-accent">
+                      {{ formatPrice(selectedSku.price_amount, siteCurrency) }}
+                    </span>
+                  </div>
+                  <div v-else-if="hasPromotionPrice(product)" class="space-y-2">
                     <div class="flex flex-wrap items-end gap-4">
                       <span class="text-5xl font-mono font-bold text-rose-600 dark:text-rose-300">
                         {{ formatPrice(getPromotionPriceAmount(product), siteCurrency) }}
@@ -149,6 +155,37 @@
                   </div>
                 </div>
 
+                <div v-if="activeSkus.length" class="mb-8">
+                  <h2 class="mb-3 text-sm font-bold uppercase tracking-widest theme-text-muted">
+                    {{ t('productDetail.skuTitle') }}
+                  </h2>
+                  <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <button
+                      v-for="sku in activeSkus"
+                      :key="sku.id"
+                      type="button"
+                      class="flex flex-col items-start rounded-xl border px-3 py-2 text-sm transition-all"
+                      :class="[
+                        normalizeSkuId(sku.id) === selectedSkuId ? 'theme-selected-surface ring-1 ring-primary/30' : 'theme-btn-secondary',
+                        isSkuPurchasable(sku) ? 'hover:-translate-y-0.5' : 'cursor-not-allowed opacity-55 border-dashed',
+                      ]"
+                      :disabled="!isSkuPurchasable(sku)"
+                      @click="selectedSkuId = normalizeSkuId(sku.id)"
+                    >
+                      <span class="font-semibold leading-tight">{{ skuDisplayText(sku) }}</span>
+                      <span
+                        class="mt-1 rounded-full border px-2 py-0.5 text-[11px]"
+                        :class="skuStockBadgeClass(sku)"
+                      >
+                        {{ skuStockText(sku) }}
+                      </span>
+                    </button>
+                  </div>
+                  <p v-if="requiresSKUSelection" class="mt-2 text-xs text-amber-500">
+                    {{ t('productDetail.skuRequired') }}
+                  </p>
+                </div>
+
                 <div class="mb-8">
                   <h2 class="mb-3 text-sm font-bold uppercase tracking-widest theme-text-muted">
                     {{ t('productDetail.description') }}
@@ -163,6 +200,9 @@
               <div class="mt-auto space-y-6">
                 <p v-if="cannotPurchaseReason" class="rounded-xl border theme-alert-danger px-4 py-3 text-sm font-semibold">
                   {{ cannotPurchaseReason }}
+                </p>
+                <p v-if="purchaseWarning" class="rounded-xl border theme-alert-warning px-4 py-3 text-sm font-semibold">
+                  {{ purchaseWarning }}
                 </p>
 
                 <div class="space-y-3">
@@ -233,7 +273,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
@@ -245,6 +285,7 @@ import { useUserAuthStore } from '../stores/userAuth'
 import { debounceAsync } from '../utils/debounce'
 import { useHead } from '@unhead/vue'
 import { amountToCents, centsToAmount } from '../utils/money'
+import { buildSkuDisplayText, normalizeSkuId } from '../utils/sku'
 
 const route = useRoute()
 const router = useRouter()
@@ -256,17 +297,85 @@ const userAuthStore = useUserAuthStore()
 const loading = ref(true)
 const product = ref<any>(null)
 const currentImage = ref<string>('')
+const selectedSkuId = ref(0)
+const purchaseWarning = ref('')
+
+const activeSkus = computed(() => {
+  const rows = Array.isArray(product.value?.skus) ? product.value.skus : []
+  return rows.filter((sku: any) => Boolean(sku?.is_active))
+})
+
+const selectedSku = computed(() => {
+  if (selectedSkuId.value <= 0) return null
+  return activeSkus.value.find((sku: any) => normalizeSkuId(sku?.id) === selectedSkuId.value) || null
+})
+
+const normalizeStockNumber = (value: unknown) => {
+  const numberValue = Number(value)
+  if (!Number.isFinite(numberValue)) return 0
+  return Math.max(Math.floor(numberValue), 0)
+}
+
+const isDefaultSkuCode = (sku: any) => {
+  const code = String(sku?.sku_code || '').trim().toUpperCase()
+  return !code || code === 'DEFAULT'
+}
+
+const shouldEnforceSkuStock = (sku: any) => {
+  if (!sku) return false
+  if (product.value?.fulfillment_type !== 'manual') return false
+  const total = normalizeStockNumber(sku?.manual_stock_total)
+  if (total > 0) return true
+  if (!isDefaultSkuCode(sku)) return true
+  return activeSkus.value.length > 1
+}
+
+const skuAvailableStock = (sku: any) => {
+  if (!shouldEnforceSkuStock(sku)) return null
+  const total = normalizeStockNumber(sku?.manual_stock_total)
+  const locked = normalizeStockNumber(sku?.manual_stock_locked)
+  const sold = normalizeStockNumber(sku?.manual_stock_sold)
+  return Math.max(total - locked - sold, 0)
+}
+
+const isSkuPurchasable = (sku: any) => {
+  const available = skuAvailableStock(sku)
+  if (available === null) return true
+  return available > 0
+}
+
+const skuStockText = (sku: any) => {
+  const available = skuAvailableStock(sku)
+  if (available === null) return t('productDetail.skuStockUnlimited')
+  if (available <= 0) return t('productDetail.skuStockOut')
+  return t('productDetail.skuStockRemaining', { count: available })
+}
+
+const skuStockBadgeClass = (sku: any) => {
+  const available = skuAvailableStock(sku)
+  if (available === null) return 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300'
+  if (available <= 0) return 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700 dark:bg-rose-950/30 dark:text-rose-300'
+  if (available <= 5) return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300'
+  return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
+}
 
 const purchaseType = computed(() => product.value?.purchase_type || 'member')
 const requiresLogin = computed(() => purchaseType.value === 'member' && !userAuthStore.isAuthenticated)
+const requiresSKUSelection = computed(() => activeSkus.value.length > 1 && !selectedSku.value)
 const canPurchase = computed(() => {
   if (!product.value) return false
+  if (activeSkus.value.length === 0) return false
   if (product.value.is_sold_out) return false
-  return product.value.stock_status !== 'out_of_stock'
+  if (requiresSKUSelection.value) return false
+  if (product.value.stock_status === 'out_of_stock') return false
+  if (product.value.fulfillment_type !== 'manual') return true
+  if (!selectedSku.value) return true
+  return isSkuPurchasable(selectedSku.value)
 })
 const cannotPurchaseReason = computed(() => {
   if (!product.value) return ''
   if (requiresLogin.value) return ''
+  if (requiresSKUSelection.value) return t('productDetail.skuRequired')
   if (canPurchase.value) return ''
   return t('productDetail.stockUnavailable')
 })
@@ -365,18 +474,76 @@ const getPromotionSaveAmount = (payload: any) => {
   return centsToAmount(original - promotion)
 }
 
+const skuDisplayText = (sku: any) => {
+  return buildSkuDisplayText({
+    skuCode: sku?.sku_code,
+    specValues: sku?.spec_values,
+    fallback: t('productDetail.skuFallback'),
+    locale: appStore.locale,
+  })
+}
+
+const syncSelectedSku = () => {
+  const rows = activeSkus.value
+  if (rows.length === 0) {
+    selectedSkuId.value = 0
+    return
+  }
+  if (rows.length === 1) {
+    selectedSkuId.value = normalizeSkuId(rows[0]?.id)
+    return
+  }
+  if (rows.some((sku: any) => normalizeSkuId(sku?.id) === selectedSkuId.value)) {
+    return
+  }
+  const firstAvailable = rows.find((sku: any) => isSkuPurchasable(sku))
+  if (firstAvailable) {
+    selectedSkuId.value = normalizeSkuId(firstAvailable?.id)
+    return
+  }
+  selectedSkuId.value = normalizeSkuId(rows[0]?.id)
+}
+
+const selectedCartQuantity = () => {
+  if (!product.value || !selectedSku.value) return 0
+  const productId = Number(product.value.id || 0)
+  const skuId = normalizeSkuId(selectedSku.value?.id)
+  if (productId <= 0 || skuId <= 0) return 0
+  const matched = cartStore.items.find((item) => item.productId === productId && normalizeSkuId(item.skuId) === skuId)
+  return Number(matched?.quantity || 0)
+}
+
 const addToCart = () => {
   if (!product.value) return
   if (!canPurchase.value) return
+  purchaseWarning.value = ''
   if (requiresLogin.value) {
     router.push(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
     return
   }
+  const sku = selectedSku.value
+  const available = skuAvailableStock(sku)
+  if (available !== null) {
+    const nextQuantity = selectedCartQuantity() + 1
+    if (nextQuantity > available) {
+      purchaseWarning.value = available > 0
+        ? t('productDetail.addCartStockExceeded', { count: available })
+        : t('productDetail.stockUnavailable')
+      return
+    }
+  }
   cartStore.addItem({
     productId: product.value.id,
+    skuId: normalizeSkuId(sku?.id),
+    skuCode: String(sku?.sku_code || ''),
+    skuSpecValues: (sku?.spec_values && typeof sku.spec_values === 'object') ? sku.spec_values : undefined,
+    skuManualStockTotal: normalizeStockNumber(sku?.manual_stock_total),
+    skuManualStockLocked: normalizeStockNumber(sku?.manual_stock_locked),
+    skuManualStockSold: normalizeStockNumber(sku?.manual_stock_sold),
+    skuStockEnforced: shouldEnforceSkuStock(sku),
     slug: product.value.slug,
     title: product.value.title,
-    priceAmount: product.value.price_amount,
+    priceAmount: String(sku?.price_amount || product.value.price_amount || '0.00'),
     image: images.value[0],
     purchaseType: product.value.purchase_type,
     fulfillmentType: product.value.fulfillment_type,
@@ -386,8 +553,10 @@ const addToCart = () => {
 }
 
 const buyNow = () => {
+  purchaseWarning.value = ''
   if (!canPurchase.value) return
   addToCart()
+  if (purchaseWarning.value) return
   router.push('/checkout')
 }
 
@@ -404,9 +573,11 @@ const loadProduct = async () => {
     if (images.value.length > 0) {
       currentImage.value = images.value[0] || ''
     }
+    syncSelectedSku()
   } catch (error) {
     console.error('Failed to load product:', error)
     product.value = null
+    selectedSkuId.value = 0
   } finally {
     loading.value = false
   }
@@ -457,6 +628,13 @@ useHead({
 onMounted(() => {
   debouncedLoadProduct()
 })
+
+watch(
+  () => selectedSkuId.value,
+  () => {
+    purchaseWarning.value = ''
+  }
+)
 
 onUnmounted(() => {
   debouncedLoadProduct.cancel()

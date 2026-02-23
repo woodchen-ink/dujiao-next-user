@@ -38,7 +38,7 @@
         <div class="space-y-4 lg:col-span-2">
           <article
             v-for="item in cartItems"
-            :key="item.productId"
+            :key="cartItemKey(item)"
             class="rounded-2xl border theme-panel p-5"
           >
             <div class="flex gap-5">
@@ -68,6 +68,8 @@
                       {{ getLocalizedText(item.title) }}
                     </router-link>
                     <p class="mt-1 text-sm theme-text-muted">{{ t('cart.priceLabel') }}：{{ formatPrice(item.priceAmount, totalCurrency) }}</p>
+                    <p v-if="itemSkuDisplay(item)" class="mt-1 text-xs theme-text-muted">{{ t('cart.skuLabel') }}：{{ itemSkuDisplay(item) }}</p>
+                    <p v-if="itemStockHint(item)" class="mt-1 text-xs theme-text-muted">{{ itemStockHint(item) }}</p>
                     <div class="mt-3 flex flex-wrap gap-2">
                       <span
                         class="theme-badge text-xs uppercase tracking-wider"
@@ -88,7 +90,7 @@
                     </div>
                   </div>
                   <button
-                    @click="cartStore.removeItem(item.productId)"
+                    @click="cartStore.removeItem(item.productId, item.skuId)"
                     class="text-sm theme-link-muted transition-colors hover:text-red-500"
                   >
                     {{ t('cart.remove') }}
@@ -107,7 +109,7 @@
                     <span class="min-w-[32px] text-center text-sm font-mono theme-text-primary">{{ item.quantity }}</span>
                     <button
                       @click="updateQty(item, item.quantity + 1)"
-                      :disabled="item.quantity >= 99"
+                      :disabled="item.quantity >= itemMaxQuantity(item)"
                       class="h-8 w-8 rounded-lg border theme-btn-secondary disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       +
@@ -119,6 +121,9 @@
                     <p class="text-sm font-semibold theme-text-primary">{{ itemSubtotal(item) }}</p>
                   </div>
                 </div>
+                <p v-if="quantityWarning(item)" class="mt-3 rounded-lg border theme-alert-warning px-3 py-2 text-xs font-medium">
+                  {{ quantityWarning(item) }}
+                </p>
               </div>
             </div>
           </article>
@@ -161,11 +166,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCartStore, type CartItem } from '../stores/cart'
 import { useAppStore } from '../stores/app'
 import { amountToCents, centsToAmount, parseInteger } from '../utils/money'
+import { buildSkuDisplayText, normalizeSkuId } from '../utils/sku'
 
 const cartStore = useCartStore()
 const appStore = useAppStore()
@@ -173,6 +179,7 @@ const { t } = useI18n()
 
 const cartItems = computed(() => cartStore.items)
 const totalItems = computed(() => cartStore.totalItems)
+const quantityWarnings = ref<Record<string, string>>({})
 const totalAmount = computed(() => {
   const totalCents = cartItems.value.reduce((sum, item) => {
     const amountCents = amountToCents(item.priceAmount)
@@ -223,6 +230,64 @@ const itemSubtotal = (item: CartItem) => {
 }
 
 const updateQty = (item: CartItem, qty: number) => {
-  cartStore.updateQuantity(item.productId, qty)
+  const key = cartItemKey(item)
+  quantityWarnings.value[key] = ''
+  const max = itemMaxQuantity(item)
+  if (qty > max) {
+    if (max <= 0) {
+      quantityWarnings.value[key] = t('cart.stockOut')
+    } else {
+      quantityWarnings.value[key] = t('cart.stockExceeded', { count: max })
+    }
+    return
+  }
+  cartStore.updateQuantity(item.productId, qty, item.skuId)
 }
+
+const cartItemKey = (item: CartItem) => `${item.productId}:${normalizeSkuId(item.skuId)}`
+
+const itemSkuDisplay = (item: CartItem) => buildSkuDisplayText({
+  skuCode: item.skuCode,
+  specValues: item.skuSpecValues,
+  fallback: t('productDetail.skuFallback'),
+  locale: appStore.locale,
+})
+
+const normalizeStockNumber = (value: unknown) => {
+  const numberValue = Number(value)
+  if (!Number.isFinite(numberValue)) return 0
+  return Math.max(Math.floor(numberValue), 0)
+}
+
+const shouldEnforceItemStock = (item: CartItem) => {
+  if (item.fulfillmentType !== 'manual') return false
+  if (item.skuStockEnforced) return true
+  const code = String(item.skuCode || '').trim().toUpperCase()
+  const total = normalizeStockNumber(item.skuManualStockTotal)
+  if (total > 0) return true
+  return Boolean(code && code !== 'DEFAULT')
+}
+
+const itemAvailableStock = (item: CartItem) => {
+  if (!shouldEnforceItemStock(item)) return null
+  const total = normalizeStockNumber(item.skuManualStockTotal)
+  const locked = normalizeStockNumber(item.skuManualStockLocked)
+  const sold = normalizeStockNumber(item.skuManualStockSold)
+  return Math.max(total - locked - sold, 0)
+}
+
+const itemMaxQuantity = (item: CartItem) => {
+  const available = itemAvailableStock(item)
+  if (available === null) return 99
+  return Math.max(Math.min(available, 99), 0)
+}
+
+const itemStockHint = (item: CartItem) => {
+  const available = itemAvailableStock(item)
+  if (available === null) return ''
+  if (available <= 0) return t('cart.stockOut')
+  return t('cart.stockRemaining', { count: available })
+}
+
+const quantityWarning = (item: CartItem) => quantityWarnings.value[cartItemKey(item)] || ''
 </script>

@@ -41,7 +41,7 @@
             <div class="space-y-4">
               <div
                 v-for="item in cartItems"
-                :key="item.productId"
+                :key="cartItemKey(item)"
                 class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20"
               >
                 <div class="flex items-start justify-between gap-4">
@@ -53,6 +53,7 @@
                       {{ getLocalizedText(item.title) }}
                     </router-link>
                     <div class="mt-1 text-xs text-gray-500">{{ t('checkout.quantityLabel') }}：{{ item.quantity }}</div>
+                    <div v-if="itemSkuDisplay(item)" class="mt-1 text-xs text-gray-500">{{ t('checkout.skuLabel') }}：{{ itemSkuDisplay(item) }}</div>
                     <div class="mt-2 flex flex-wrap gap-2">
                       <span
                         class="theme-badge text-xs uppercase tracking-wider"
@@ -90,12 +91,12 @@
             <div class="space-y-5">
               <div
                 v-for="manualItem in manualFormProducts"
-                :key="manualItem.productId"
+                :key="manualItem.itemKey"
                 class="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-white/10 dark:bg-black/20"
               >
-                <h3 class="mb-3 text-sm font-semibold theme-text-primary">{{ getLocalizedText(manualItem.title) }}</h3>
+                <h3 class="mb-3 text-sm font-semibold theme-text-primary">{{ manualItemTitle(manualItem) }}</h3>
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div v-for="field in manualItem.fields" :key="`${manualItem.productId}-${field.key}`" class="space-y-1.5">
+                  <div v-for="field in manualItem.fields" :key="`${manualItem.itemKey}-${field.key}`" class="space-y-1.5">
                     <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
                       {{ getManualFieldLabel(field) }}
                       <span v-if="field.required" class="ml-1 text-red-500">*</span>
@@ -103,7 +104,7 @@
 
                     <textarea
                       v-if="field.type === 'textarea'"
-                      v-model="ensureManualFormRow(manualItem.productId)[field.key]"
+                      v-model="ensureManualFormRow(manualItem.itemKey)[field.key]"
                       rows="3"
                       class="w-full form-input-compact"
                       :placeholder="getManualFieldPlaceholder(field)"
@@ -111,7 +112,7 @@
 
                     <select
                       v-else-if="field.type === 'select'"
-                      v-model="ensureManualFormRow(manualItem.productId)[field.key]"
+                      v-model="ensureManualFormRow(manualItem.itemKey)[field.key]"
                       class="w-full form-input-compact"
                     >
                       <option value="">{{ t('checkout.manualFormSelectPlaceholder') }}</option>
@@ -121,9 +122,9 @@
                     <div v-else-if="field.type === 'radio'" class="space-y-2 rounded-xl border border-gray-200 bg-white p-3 dark:border-white/10 dark:bg-black/40">
                       <label v-for="option in field.options" :key="option" class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                         <input
-                          v-model="ensureManualFormRow(manualItem.productId)[field.key]"
+                          v-model="ensureManualFormRow(manualItem.itemKey)[field.key]"
                           type="radio"
-                          :name="`manual-radio-${manualItem.productId}-${field.key}`"
+                          :name="`manual-radio-${manualItem.itemKey}-${field.key}`"
                           :value="option"
                           class="h-4 w-4"
                         />
@@ -134,7 +135,7 @@
                     <div v-else-if="field.type === 'checkbox'" class="space-y-2 rounded-xl border border-gray-200 bg-white p-3 dark:border-white/10 dark:bg-black/40">
                       <label v-for="option in field.options" :key="option" class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                         <input
-                          v-model="ensureManualFormRow(manualItem.productId)[field.key]"
+                          v-model="ensureManualFormRow(manualItem.itemKey)[field.key]"
                           type="checkbox"
                           :value="option"
                           class="h-4 w-4"
@@ -145,17 +146,17 @@
 
                     <input
                       v-else
-                      v-model="ensureManualFormRow(manualItem.productId)[field.key]"
+                      v-model="ensureManualFormRow(manualItem.itemKey)[field.key]"
                       :type="field.type === 'number' ? 'number' : field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'"
                       class="w-full form-input-compact"
                       :placeholder="getManualFieldPlaceholder(field)"
                     />
 
                     <p
-                      v-if="submitAttempted && manualFieldError(manualItem.productId, field.key)"
+                      v-if="submitAttempted && manualFieldError(manualItem.itemKey, field.key)"
                       class="text-xs text-red-500"
                     >
-                      {{ manualFieldError(manualItem.productId, field.key) }}
+                      {{ manualFieldError(manualItem.itemKey, field.key) }}
                     </p>
                   </div>
                 </div>
@@ -301,6 +302,7 @@ import { guestOrderAPI, userOrderAPI, type CaptchaPayload } from '../api'
 import { debounceAsync } from '../utils/debounce'
 import { pageAlertClass, type PageAlert } from '../utils/alerts'
 import { amountToCents, centsToAmount, parseInteger } from '../utils/money'
+import { buildSkuDisplayText, normalizeSkuId } from '../utils/sku'
 import ImageCaptcha from '../components/captcha/ImageCaptcha.vue'
 import TurnstileCaptcha from '../components/captcha/TurnstileCaptcha.vue'
 
@@ -372,7 +374,11 @@ interface ManualFormField {
 }
 
 interface ManualFormProduct {
+  itemKey: string
   productId: number
+  skuId: number
+  skuCode: string
+  skuSpecValues?: Record<string, any>
   title: any
   fields: ManualFormField[]
 }
@@ -468,8 +474,13 @@ const manualFormProducts = computed<ManualFormProduct[]>(() => cartItems.value
     if (fields.length === 0) {
       return null
     }
+    const skuId = normalizeSkuId(item.skuId)
     return {
+      itemKey: `${item.productId}:${skuId}`,
       productId: item.productId,
+      skuId,
+      skuCode: String(item.skuCode || ''),
+      skuSpecValues: item.skuSpecValues,
       title: item.title,
       fields,
     }
@@ -479,7 +490,7 @@ const manualFormProducts = computed<ManualFormProduct[]>(() => cartItems.value
 watch(manualFormProducts, (products) => {
   const nextData: Record<string, Record<string, any>> = {}
   products.forEach((product) => {
-    const key = String(product.productId)
+    const key = product.itemKey
     const current = manualFormData.value[key] || {}
     const formValues: Record<string, any> = {}
     product.fields.forEach((field) => {
@@ -511,22 +522,21 @@ const getManualFieldPlaceholder = (field: ManualFormField) => {
   return resolveLocalizedText(field.placeholder, '')
 }
 
-const manualFieldErrorKey = (productId: number, fieldKey: string) => `${productId}:${fieldKey}`
+const manualFieldErrorKey = (itemKey: string, fieldKey: string) => `${itemKey}:${fieldKey}`
 
-const ensureManualFormRow = (productId: number) => {
-  const key = String(productId)
-  if (!manualFormData.value[key]) {
-    manualFormData.value[key] = {}
+const ensureManualFormRow = (itemKey: string) => {
+  if (!manualFormData.value[itemKey]) {
+    manualFormData.value[itemKey] = {}
   }
-  return manualFormData.value[key]
+  return manualFormData.value[itemKey]
 }
 
 const manualFormValidation = computed(() => {
   const errors: Record<string, string> = {}
   let firstError = ''
 
-  const setError = (productId: number, field: ManualFormField, message: string) => {
-    const errorKey = manualFieldErrorKey(productId, field.key)
+  const setError = (itemKey: string, field: ManualFormField, message: string) => {
+    const errorKey = manualFieldErrorKey(itemKey, field.key)
     if (!errors[errorKey]) {
       errors[errorKey] = message
       if (!firstError) {
@@ -536,7 +546,7 @@ const manualFormValidation = computed(() => {
   }
 
   manualFormProducts.value.forEach((product) => {
-    const values = manualFormData.value[String(product.productId)] || {}
+    const values = manualFormData.value[product.itemKey] || {}
     product.fields.forEach((field) => {
       const fieldLabel = getManualFieldLabel(field)
       const rawValue = values[field.key]
@@ -545,18 +555,18 @@ const manualFormValidation = computed(() => {
           ? rawValue.map((item: any) => String(item).trim()).filter(Boolean)
           : []
         if (field.required && list.length === 0) {
-          setError(product.productId, field, t('checkout.manualFormFieldRequired', { name: fieldLabel }))
+          setError(product.itemKey, field, t('checkout.manualFormFieldRequired', { name: fieldLabel }))
           return
         }
         if (list.length > 0 && field.options.length > 0 && list.some((item) => !field.options.includes(item))) {
-          setError(product.productId, field, t('checkout.manualFormFieldOptionInvalid', { name: fieldLabel }))
+          setError(product.itemKey, field, t('checkout.manualFormFieldOptionInvalid', { name: fieldLabel }))
         }
         return
       }
 
       const text = rawValue == null ? '' : String(rawValue).trim()
       if (field.required && !text) {
-        setError(product.productId, field, t('checkout.manualFormFieldRequired', { name: fieldLabel }))
+        setError(product.itemKey, field, t('checkout.manualFormFieldRequired', { name: fieldLabel }))
         return
       }
       if (!text) {
@@ -564,32 +574,32 @@ const manualFormValidation = computed(() => {
       }
 
       if ((field.type === 'text' || field.type === 'textarea' || field.type === 'phone' || field.type === 'email') && field.max_len && text.length > field.max_len) {
-        setError(product.productId, field, t('checkout.manualFormFieldMaxLength', { name: fieldLabel, max: field.max_len }))
+        setError(product.itemKey, field, t('checkout.manualFormFieldMaxLength', { name: fieldLabel, max: field.max_len }))
         return
       }
       if ((field.type === 'phone' && !phonePattern.test(text)) || (field.type === 'email' && !emailPattern.test(text))) {
-        setError(product.productId, field, t('checkout.manualFormFieldInvalid', { name: fieldLabel }))
+        setError(product.itemKey, field, t('checkout.manualFormFieldInvalid', { name: fieldLabel }))
         return
       }
       if (field.type === 'number') {
         const numberValue = Number(text)
         if (!Number.isFinite(numberValue)) {
-          setError(product.productId, field, t('checkout.manualFormFieldNumberInvalid', { name: fieldLabel }))
+          setError(product.itemKey, field, t('checkout.manualFormFieldNumberInvalid', { name: fieldLabel }))
           return
         }
         if ((field.min !== undefined && numberValue < field.min) || (field.max !== undefined && numberValue > field.max)) {
-          setError(product.productId, field, t('checkout.manualFormFieldNumberRange', { name: fieldLabel }))
+          setError(product.itemKey, field, t('checkout.manualFormFieldNumberRange', { name: fieldLabel }))
           return
         }
       }
       if ((field.type === 'select' || field.type === 'radio') && field.options.length > 0 && !field.options.includes(text)) {
-        setError(product.productId, field, t('checkout.manualFormFieldOptionInvalid', { name: fieldLabel }))
+        setError(product.itemKey, field, t('checkout.manualFormFieldOptionInvalid', { name: fieldLabel }))
         return
       }
       if (field.regex) {
         const regex = compileManualRegex(field.regex)
         if (!regex || !regex.test(text)) {
-          setError(product.productId, field, t('checkout.manualFormFieldInvalid', { name: fieldLabel }))
+          setError(product.itemKey, field, t('checkout.manualFormFieldInvalid', { name: fieldLabel }))
         }
       }
     })
@@ -602,14 +612,15 @@ const manualFormValidation = computed(() => {
   }
 })
 
-const manualFieldError = (productId: number, fieldKey: string) => {
-  return manualFormValidation.value.errors[manualFieldErrorKey(productId, fieldKey)] || ''
+const manualFieldError = (itemKey: string, fieldKey: string) => {
+  return manualFormValidation.value.errors[manualFieldErrorKey(itemKey, fieldKey)] || ''
 }
 
 const buildManualFormDataPayload = () => {
   const payload: Record<string, any> = {}
+  const productCounter: Record<string, number> = {}
   manualFormProducts.value.forEach((product) => {
-    const values = manualFormData.value[String(product.productId)] || {}
+    const values = manualFormData.value[product.itemKey] || {}
     const row: Record<string, any> = {}
     product.fields.forEach((field) => {
       const rawValue = values[field.key]
@@ -627,7 +638,15 @@ const buildManualFormDataPayload = () => {
         row[field.key] = text
       }
     })
-    payload[String(product.productId)] = row
+    payload[product.itemKey] = row
+    const productKey = String(product.productId)
+    productCounter[productKey] = (productCounter[productKey] || 0) + 1
+  })
+  manualFormProducts.value.forEach((product) => {
+    const productKey = String(product.productId)
+    if (productCounter[productKey] === 1) {
+      payload[productKey] = payload[product.itemKey]
+    }
   })
   return payload
 }
@@ -732,6 +751,7 @@ const checkoutAlert = computed<PageAlert | null>(() => {
 
 const buildItemsPayload = () => cartItems.value.map(item => ({
   product_id: item.productId,
+  sku_id: normalizeSkuId(item.skuId) || undefined,
   quantity: item.quantity,
   fulfillment_type: item.fulfillmentType || undefined,
 }))
@@ -891,6 +911,27 @@ const getLocalizedText = (jsonData: any) => {
   if (!jsonData) return ''
   const locale = appStore.locale
   return jsonData[locale] || jsonData['zh-CN'] || jsonData['en-US'] || ''
+}
+
+const cartItemKey = (item: CartItem) => `${item.productId}:${normalizeSkuId(item.skuId)}`
+
+const itemSkuDisplay = (item: CartItem) => buildSkuDisplayText({
+  skuCode: item.skuCode,
+  specValues: item.skuSpecValues,
+  fallback: t('productDetail.skuFallback'),
+  locale: appStore.locale,
+})
+
+const manualItemTitle = (manualItem: ManualFormProduct) => {
+  const productTitle = getLocalizedText(manualItem.title)
+  const skuText = buildSkuDisplayText({
+    skuCode: manualItem.skuCode,
+    specValues: manualItem.skuSpecValues,
+    fallback: t('productDetail.skuFallback'),
+    locale: appStore.locale,
+  })
+  if (!skuText) return productTitle
+  return `${productTitle} (${skuText})`
 }
 
 const formatPrice = (amount: any, currency: any) => {

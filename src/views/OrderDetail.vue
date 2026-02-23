@@ -115,6 +115,7 @@
               <div>
                 <div class="theme-text-primary font-medium">{{ getLocalizedText(item.title) }}</div>
                 <div class="text-xs theme-text-muted">{{ t('orderDetail.quantityLabel') }}：{{ item.quantity }}</div>
+                <div v-if="orderItemSkuText(item)" class="text-xs theme-text-muted mt-1">{{ t('orderDetail.itemSkuLabel') }}：{{ orderItemSkuText(item) }}</div>
                 <div class="text-xs theme-text-muted mt-1">
                   {{ t('orderDetail.itemFulfillmentLabel') }}：{{ fulfillmentTypeLabelText(item.fulfillment_type) }}
                 </div>
@@ -175,6 +176,7 @@
                     <div>
                       <div class="theme-text-primary font-medium">{{ getLocalizedText(item.title) }}</div>
                       <div class="text-xs theme-text-muted">{{ t('orderDetail.quantityLabel') }}：{{ item.quantity }}</div>
+                      <div v-if="orderItemSkuText(item)" class="text-xs theme-text-muted mt-1">{{ t('orderDetail.itemSkuLabel') }}：{{ orderItemSkuText(item) }}</div>
                       <div class="text-xs theme-text-muted mt-1">
                         {{ t('orderDetail.itemFulfillmentLabel') }}：{{ fulfillmentTypeLabelText(item.fulfillment_type) }}
                       </div>
@@ -264,6 +266,7 @@ import { orderStatusClass, orderStatusLabel } from '../utils/status'
 import { fulfillmentStatusLabel, fulfillmentTypeLabel } from '../utils/fulfillment'
 import { debounceAsync } from '../utils/debounce'
 import { amountToCents } from '../utils/money'
+import { buildSkuDisplayTextFromSnapshot } from '../utils/sku'
 
 const route = useRoute()
 const router = useRouter()
@@ -370,6 +373,13 @@ const manualSubmissionRows = (submission: any) => {
       key: String(key),
       value: formatManualValue(value),
     }))
+}
+
+const orderItemSkuText = (item: any) => {
+  return buildSkuDisplayTextFromSnapshot(item?.sku_snapshot, {
+    locale: appStore.locale,
+    fallback: t('productDetail.skuFallback'),
+  })
 }
 
 const fulfillmentDeliveryLines = (fulfillment: any) => {

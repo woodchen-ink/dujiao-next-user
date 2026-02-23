@@ -222,6 +222,9 @@
                     {{ t('orderDetail.quantityLabel') }}：{{ item.quantity }} · {{ t('orderDetail.itemFulfillmentLabel') }}：{{
                       fulfillmentTypeLabelText(item.fulfillment_type) }}
                   </div>
+                  <div v-if="orderItemSkuText(item)" class="text-xs theme-text-muted mt-1">
+                    {{ t('orderDetail.itemSkuLabel') }}：{{ orderItemSkuText(item) }}
+                  </div>
                 </div>
                 <div class="text-xs theme-text-muted">
                   {{ t('orderDetail.totalPriceLabel') }}：{{ formatMoney(item.total_price, order.currency) }}
@@ -394,6 +397,7 @@ import { fulfillmentTypeLabel } from '../utils/fulfillment'
 import { debounceAsync } from '../utils/debounce'
 import { copyText } from '../utils/clipboard'
 import { amountToCents, basisPointsToPercent, calculateFeeCents, centsToAmount, rateToBasisPoints } from '../utils/money'
+import { buildSkuDisplayTextFromSnapshot } from '../utils/sku'
 import QRCode from 'qrcode'
 import { pageAlertClass, type PageAlert } from '../utils/alerts'
 
@@ -1105,6 +1109,13 @@ const getLocalizedText = (jsonData: any) => {
   if (!jsonData) return ''
   const locale = appStore.locale
   return jsonData[locale] || jsonData['zh-CN'] || jsonData['en-US'] || ''
+}
+
+const orderItemSkuText = (item: any) => {
+  return buildSkuDisplayTextFromSnapshot(item?.sku_snapshot, {
+    locale: appStore.locale,
+    fallback: t('productDetail.skuFallback'),
+  })
 }
 
 const fulfillmentTypeLabelText = (type: string) => fulfillmentTypeLabel(t, type, 'orderDetail')

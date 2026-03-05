@@ -176,6 +176,7 @@
           <WalletPanel v-else-if="currentSection === 'wallet'" />
           <AffiliatePanel v-else-if="currentSection === 'affiliate'" />
           <GiftCardPanel v-else-if="currentSection === 'giftCard'" />
+          <ApiPanel v-else-if="currentSection === 'api'" />
           <OrdersPanel v-else />
         </section>
       </div>
@@ -187,7 +188,7 @@
 import { computed, onMounted, ref, type Component } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { HomeIcon, ShoppingBagIcon, WalletIcon, GiftIcon, ShieldCheckIcon, UserCircleIcon, MegaphoneIcon } from '@heroicons/vue/24/outline'
+import { HomeIcon, ShoppingBagIcon, WalletIcon, GiftIcon, ShieldCheckIcon, UserCircleIcon, MegaphoneIcon, KeyIcon } from '@heroicons/vue/24/outline'
 import { orderStatusClass, orderStatusLabel } from '../utils/status'
 import { pageAlertClass, type PageAlert } from '../utils/alerts'
 import { useUserProfileStore } from '../stores/userProfile'
@@ -197,8 +198,9 @@ import OrdersPanel from './personal/OrdersPanel.vue'
 import WalletPanel from './personal/WalletPanel.vue'
 import GiftCardPanel from './personal/GiftCardPanel.vue'
 import AffiliatePanel from './personal/AffiliatePanel.vue'
+import ApiPanel from './personal/ApiPanel.vue'
 
-type PersonalSection = 'overview' | 'profile' | 'security' | 'orders' | 'wallet' | 'giftCard' | 'affiliate'
+type PersonalSection = 'overview' | 'profile' | 'security' | 'orders' | 'wallet' | 'giftCard' | 'affiliate' | 'api'
 
 const props = withDefaults(defineProps<{ section?: PersonalSection }>(), {
   section: 'overview',
@@ -215,6 +217,7 @@ const sectionItems: Array<{ key: PersonalSection; label: string; icon: Component
   { key: 'affiliate', label: 'personalCenter.tabs.affiliate', icon: MegaphoneIcon },
   { key: 'giftCard', label: 'personalCenter.tabs.giftCard', icon: GiftIcon },
   { key: 'security', label: 'personalCenter.tabs.security', icon: ShieldCheckIcon },
+  { key: 'api', label: 'personalCenter.tabs.api', icon: KeyIcon },
   { key: 'profile', label: 'personalCenter.tabs.profile', icon: UserCircleIcon },
 ]
 
@@ -226,6 +229,7 @@ const sectionRouteMap: Record<PersonalSection, string> = {
   wallet: '/me/wallet',
   affiliate: '/me/affiliate',
   giftCard: '/me/gift-cards',
+  api: '/me/api',
 }
 
 const currentSection = computed<PersonalSection>(() => props.section)

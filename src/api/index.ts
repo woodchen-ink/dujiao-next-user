@@ -544,6 +544,13 @@ export const walletAPI = {
         userApi.post<ApiResponse<WalletRechargeResult>>(`/wallet/recharge/payments/${paymentID}/capture`),
 }
 
+export const apiCredentialAPI = {
+    getMy: () => userApi.get<ApiResponse>('/api-credential'),
+    apply: () => userApi.post<ApiResponse>('/api-credential/apply'),
+    regenerate: () => userApi.post<ApiResponse>('/api-credential/regenerate'),
+    updateStatus: (data: { is_active: boolean }) => userApi.put<ApiResponse>('/api-credential/status', data),
+}
+
 export const affiliateAPI = {
     trackClick: (data: { affiliate_code: string; visitor_key?: string; landing_path?: string; referrer?: string }) =>
         api.post<ApiResponse<{ ok: boolean }>>('/public/affiliate/click', data),

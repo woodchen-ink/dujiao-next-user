@@ -88,6 +88,13 @@ const router = createRouter({
             meta: { requiresUserAuth: true }
         },
         {
+            path: '/me/api',
+            name: 'personal-center-api',
+            component: () => import('../views/PersonalCenter.vue'),
+            props: { section: 'api' },
+            meta: { requiresUserAuth: true }
+        },
+        {
             path: '/me/affiliate',
             name: 'personal-center-affiliate',
             component: () => import('../views/PersonalCenter.vue'),

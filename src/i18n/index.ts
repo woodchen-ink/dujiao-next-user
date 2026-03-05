@@ -150,6 +150,7 @@ const messages = {
                 wallet: '我的钱包',
                 affiliate: '推广返利',
                 giftCard: '礼品卡兑换',
+                api: 'API 对接',
             },
             common: {
                 loadFailed: '个人中心数据加载失败，请稍后重试',
@@ -959,6 +960,7 @@ const messages = {
                 wallet: '我的錢包',
                 affiliate: '推廣返利',
                 giftCard: '禮品卡兌換',
+                api: 'API 對接',
             },
             common: {
                 loadFailed: '個人中心資料載入失敗，請稍後重試',
@@ -1744,6 +1746,7 @@ const messages = {
                 wallet: 'My Wallet',
                 affiliate: 'Affiliate',
                 giftCard: 'Gift Card',
+                api: 'API Integration',
             },
             common: {
                 loadFailed: 'Failed to load personal center data, please try again later',

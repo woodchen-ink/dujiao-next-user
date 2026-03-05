@@ -596,19 +596,21 @@ useHead({
   meta: () => {
     if (!product.value) return []
     const seoMeta = product.value.seo_meta || {}
+    const seoKeywords = getLocalizedText(seoMeta.keywords) || (typeof seoMeta.keywords === 'string' ? seoMeta.keywords : '')
+    const seoDescription = getLocalizedText(seoMeta.description) || (typeof seoMeta.description === 'string' ? seoMeta.description : '')
     const tags = []
 
     // Standard SEO Tags
-    if (seoMeta.keywords) tags.push({ name: 'keywords', content: seoMeta.keywords })
-    if (seoMeta.description) tags.push({ name: 'description', content: seoMeta.description })
+    if (seoKeywords) tags.push({ name: 'keywords', content: seoKeywords })
+    if (seoDescription) tags.push({ name: 'description', content: seoDescription })
 
     // Open Graph Tags
     tags.push({ property: 'og:type', content: 'website' })
     if (product.value.title) {
       tags.push({ property: 'og:title', content: getLocalizedText(product.value.title) })
     }
-    if (seoMeta.description) {
-      tags.push({ property: 'og:description', content: seoMeta.description })
+    if (seoDescription) {
+      tags.push({ property: 'og:description', content: seoDescription })
     }
     if (images.value && images.value.length > 0) {
       tags.push({ property: 'og:image', content: images.value[0] })
@@ -620,8 +622,8 @@ useHead({
     if (product.value.title) {
       tags.push({ name: 'twitter:title', content: getLocalizedText(product.value.title) })
     }
-    if (seoMeta.description) {
-      tags.push({ name: 'twitter:description', content: seoMeta.description })
+    if (seoDescription) {
+      tags.push({ name: 'twitter:description', content: seoDescription })
     }
     if (images.value && images.value.length > 0) {
       tags.push({ name: 'twitter:image', content: images.value[0] })

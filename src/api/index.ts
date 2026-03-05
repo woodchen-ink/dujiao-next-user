@@ -137,6 +137,12 @@ userApi.interceptors.request.use(
     }
 )
 
+const isAuthEndpoint = (url?: string) => {
+    if (!url) return false
+    const path = url.replace(/^https?:\/\/[^/]+/, '')
+    return /\/auth\/(login|register|telegram\/login|forgot-password)/.test(path)
+}
+
 userApi.interceptors.response.use(
     (response) => {
         const data: ApiResponse = response.data
@@ -148,7 +154,7 @@ userApi.interceptors.response.use(
 
         if (typeof data.status_code !== 'undefined') {
             if (data.status_code !== 0) {
-                if (data.status_code === 401) {
+                if (data.status_code === 401 && !isAuthEndpoint(response.config.url)) {
                     localStorage.removeItem('user_token')
                     localStorage.removeItem('user_profile')
                     window.location.href = '/auth/login'
@@ -176,9 +182,11 @@ userApi.interceptors.response.use(
             switch (status) {
                 case 401:
                     message = t('common.api.unauthorized')
-                    localStorage.removeItem('user_token')
-                    localStorage.removeItem('user_profile')
-                    window.location.href = '/auth/login'
+                    if (!isAuthEndpoint(error.config?.url)) {
+                        localStorage.removeItem('user_token')
+                        localStorage.removeItem('user_profile')
+                        window.location.href = '/auth/login'
+                    }
                     break
                 case 403:
                     message = t('common.api.forbidden')

@@ -538,6 +538,7 @@ const messages = {
                     registerFailed: '注册失败，请检查输入',
                     agreementRequired: '请先阅读并同意隐私政策和服务条款',
                 },
+                registrationDisabled: '注册功能已关闭',
             },
             forgot: {
                 title: '找回密码',
@@ -1430,6 +1431,7 @@ const messages = {
                     registerFailed: '註冊失敗，請檢查輸入',
                     agreementRequired: '請先閱讀並同意隱私政策與服務條款',
                 },
+                registrationDisabled: '註冊功能已關閉',
             },
             forgot: {
                 title: '找回密碼',
@@ -2297,6 +2299,7 @@ const messages = {
                     registerFailed: 'Registration failed, please check input',
                     agreementRequired: 'Please read and agree to the Privacy Policy and Terms of Service first',
                 },
+                registrationDisabled: 'Registration is currently disabled',
             },
             forgot: {
                 title: 'Reset Password',

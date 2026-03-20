@@ -17,6 +17,14 @@
       </div>
 
       <div class="theme-auth-card">
+        <div v-if="!registrationEnabled" class="py-8 text-center">
+          <p class="text-sm theme-text-muted">{{ t('auth.register.registrationDisabled') }}</p>
+          <router-link to="/auth/login" class="mt-4 inline-block theme-link text-sm font-semibold">
+            {{ t('auth.register.hasAccount') }}
+          </router-link>
+        </div>
+
+        <template v-else>
         <div class="mb-8 text-center">
           <p class="text-xs font-semibold uppercase tracking-[0.22em] theme-text-accent">{{ brandSiteName }}</p>
           <h1 class="mt-3 text-3xl font-black theme-text-primary">{{ t('auth.register.title') }}</h1>
@@ -56,7 +64,7 @@
             />
           </div>
 
-          <div v-if="sendCodeCaptchaEnabled">
+          <div v-if="emailVerificationEnabled && sendCodeCaptchaEnabled">
             <label class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] theme-text-muted">
               <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -78,7 +86,7 @@
             />
           </div>
 
-          <div>
+          <div v-if="emailVerificationEnabled">
             <label class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] theme-text-muted">
               <svg class="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -140,6 +148,7 @@
             {{ userAuthStore.loading ? t('auth.register.creating') : t('auth.register.create') }}
           </button>
         </form>
+        </template>
       </div>
 
       <div class="mt-4 text-center">
@@ -192,6 +201,8 @@ const captchaConfig = computed(() => appStore.config?.captcha || null)
 const captchaProvider = computed(() => String(captchaConfig.value?.provider || 'none'))
 const sendCodeCaptchaEnabled = computed(() => !!captchaConfig.value?.scenes?.register_send_code && captchaProvider.value !== 'none')
 const turnstileSiteKey = computed(() => String(captchaConfig.value?.turnstile?.site_key || ''))
+const registrationEnabled = computed(() => appStore.config?.registration_enabled !== false)
+const emailVerificationEnabled = computed(() => appStore.config?.email_verification_enabled !== false)
 
 const startCountdown = () => {
   countdown.value = 60
@@ -271,7 +282,8 @@ const performSendCode = async () => {
 
 const performRegister = async () => {
   error.value = ''
-  if (!email.value || !password.value || !code.value) return
+  if (!email.value || !password.value) return
+  if (emailVerificationEnabled.value && !code.value) return
   if (!agreed.value) {
     error.value = t('auth.register.errors.agreementRequired')
     return
@@ -280,7 +292,7 @@ const performRegister = async () => {
     await userAuthStore.register({
       email: email.value,
       password: password.value,
-      code: code.value,
+      code: emailVerificationEnabled.value ? code.value : '',
       agreement_accepted: agreed.value,
     })
     router.push('/me/orders')

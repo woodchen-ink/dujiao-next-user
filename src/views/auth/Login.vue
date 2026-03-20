@@ -130,7 +130,7 @@
         </form>
       </div>
 
-      <div class="mt-4 text-center">
+      <div v-if="registrationEnabled" class="mt-4 text-center">
         <router-link
           to="/auth/register"
           class="theme-link-muted text-sm"
@@ -182,6 +182,7 @@ const turnstileSiteKey = computed(() => String(captchaConfig.value?.turnstile?.s
 const telegramConfig = computed(() => appStore.config?.telegram_auth || null)
 const telegramBotUsername = computed(() => String(telegramConfig.value?.bot_username || '').trim())
 const telegramEnabled = computed(() => !!telegramConfig.value?.enabled && telegramBotUsername.value !== '')
+const registrationEnabled = computed(() => appStore.config?.registration_enabled !== false)
 const telegramCallbackName = '__dujiaoUserTelegramLogin'
 
 const getCaptchaPayload = (): CaptchaPayload | undefined => {

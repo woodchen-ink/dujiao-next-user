@@ -120,6 +120,9 @@ const messages = {
             promotionHintFixedNoMin: '每件立减{value}',
             promotionHintSpecialNoMin: '单价降至{value}',
             promotionBadge: '有活动',
+            searchBoxPlaceholder: '搜索商品名称或关键词...',
+            viewDetails: '查看详情',
+            quickBuy: '购买',
         },
         blog: {
             subtitle: '最新文章和动态',
@@ -1022,6 +1025,9 @@ const messages = {
             promotionHintFixedNoMin: '每件立減{value}',
             promotionHintSpecialNoMin: '單價降至{value}',
             promotionBadge: '有活動',
+            searchBoxPlaceholder: '搜尋商品名稱或關鍵詞...',
+            viewDetails: '查看詳情',
+            quickBuy: '購買',
         },
         productDetail: {
             description: '商品描述',
@@ -1924,6 +1930,9 @@ const messages = {
             promotionHintFixedNoMin: 'Save {value} per item',
             promotionHintSpecialNoMin: 'Price drops to {value} per item',
             promotionBadge: 'Promo',
+            searchBoxPlaceholder: 'Search products by name or keyword...',
+            viewDetails: 'View Details',
+            quickBuy: 'Buy',
         },
         productDetail: {
             description: 'Description',

@@ -46,20 +46,26 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '../stores/cart'
 import { useUserAuthStore } from '../stores/userAuth'
+import { useAppStore } from '../stores/app'
 
 const route = useRoute()
 const { t } = useI18n()
 const cartStore = useCartStore()
 const userAuthStore = useUserAuthStore()
+const appStore = useAppStore()
 
 const cartCount = computed(() => cartStore.totalItems)
+const isListMode = computed(() => appStore.config?.template_mode === 'list')
 
-const navItems = computed(() => [
-  { path: '/', icon: 'home', label: 'bottomNav.home' },
-  { path: '/products', icon: 'products', label: 'bottomNav.products' },
-  { path: '/cart', icon: 'cart', label: 'bottomNav.cart' },
-  { path: userAuthStore.isAuthenticated ? '/me' : '/auth/login', icon: 'me', label: 'bottomNav.me' },
-])
+const navItems = computed(() => {
+  const items = [
+    { path: '/', icon: 'home', label: 'bottomNav.home' },
+    ...(!isListMode.value ? [{ path: '/products', icon: 'products', label: 'bottomNav.products' }] : []),
+    { path: '/cart', icon: 'cart', label: 'bottomNav.cart' },
+    { path: userAuthStore.isAuthenticated ? '/me' : '/auth/login', icon: 'me', label: 'bottomNav.me' },
+  ]
+  return items
+})
 
 const isActive = (path: string) => {
   if (path === '/') return route.path === '/'

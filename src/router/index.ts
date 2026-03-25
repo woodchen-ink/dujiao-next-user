@@ -117,12 +117,22 @@ const router = createRouter({
         {
             path: '/products',
             name: 'products',
-            component: productsViewLoader,
+            component: () => {
+                const appStore = useAppStore()
+                return appStore.config?.template_mode === 'list'
+                    ? homeViewLoader()
+                    : productsViewLoader()
+            },
         },
         {
             path: '/categories/:slug',
             name: 'category-products',
-            component: productsViewLoader,
+            component: () => {
+                const appStore = useAppStore()
+                return appStore.config?.template_mode === 'list'
+                    ? homeViewLoader()
+                    : productsViewLoader()
+            },
         },
         {
             path: '/products/:slug',
@@ -280,6 +290,11 @@ router.beforeEach(async (to, _from, next) => {
     const appStore = useAppStore()
     void captureAffiliateFromRoute(to)
     appStore.startNavigating()
+
+    // Ensure config is loaded before checking template mode
+    if (!appStore.config) {
+        await appStore.loadConfig()
+    }
 
     if (to.meta.requiresUserAuth) {
         if (!userAuthStore.isAuthenticated) {

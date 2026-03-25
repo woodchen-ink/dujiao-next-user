@@ -658,7 +658,8 @@ const addToCart = () => {
   }
   const sku = selectedSku.value
   const available = skuAvailableStock(sku)
-  const nextQuantity = selectedCartQuantity() + 1
+  const cartQty = selectedCartQuantity()
+  const nextQuantity = cartQty + 1
   const productLimit = normalizeOptionalLimitNumber(product.value?.max_purchase_quantity)
   let effectiveLimit: number | null = productLimit
   if (available !== null) {
@@ -667,11 +668,15 @@ const addToCart = () => {
   if (effectiveLimit !== null && nextQuantity > effectiveLimit) {
     if (available !== null && effectiveLimit === available && (productLimit === null || available <= productLimit)) {
       purchaseWarning.value = available > 0
-        ? t('productDetail.addCartStockExceeded', { count: available })
+        ? (cartQty > 0
+            ? t('productDetail.addCartStockExceededWithCart', { count: available, cartCount: cartQty })
+            : t('productDetail.addCartStockExceeded', { count: available }))
         : t('productDetail.stockUnavailable')
       return
     }
-    purchaseWarning.value = t('productDetail.addCartLimitExceeded', { count: effectiveLimit })
+    purchaseWarning.value = cartQty > 0
+      ? t('productDetail.addCartLimitExceededWithCart', { count: effectiveLimit, cartCount: cartQty })
+      : t('productDetail.addCartLimitExceeded', { count: effectiveLimit })
     return
   }
   cartStore.addItem({

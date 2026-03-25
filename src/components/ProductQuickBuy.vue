@@ -156,6 +156,29 @@
             <!-- Divider -->
             <div class="h-px bg-gray-100 dark:bg-white/[0.06] -mx-4 md:-mx-5 mb-4" />
 
+            <!-- Product description -->
+            <p v-if="productDescription" class="mb-4 text-xs leading-relaxed theme-text-secondary line-clamp-3">
+              {{ productDescription }}
+            </p>
+
+            <!-- Promotion rules -->
+            <div v-if="hasPromotionRules(product)" class="mb-4 rounded-lg border border-orange-200 dark:border-orange-800/50 bg-orange-50/50 dark:bg-orange-950/20 px-3 py-2">
+              <div class="flex items-center gap-1 mb-1">
+                <svg class="w-3.5 h-3.5 text-orange-500 dark:text-orange-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <span class="text-[11px] font-semibold text-orange-700 dark:text-orange-300">
+                  {{ t('products.promotionRulesTitle') }}
+                </span>
+              </div>
+              <ul class="space-y-0.5">
+                <li v-for="rule in getPromotionRules(product)" :key="rule.id" class="text-[11px] text-orange-600 dark:text-orange-300/90 flex items-center gap-1">
+                  <span class="w-1 h-1 rounded-full bg-orange-400 dark:bg-orange-500 shrink-0"></span>
+                  <span>{{ formatPromotionRule(rule) }}</span>
+                </li>
+              </ul>
+            </div>
+
             <!-- SKU Selection -->
             <div v-if="activeSkus.length > 1" class="mb-4">
               <div class="mb-2 text-xs font-medium theme-text-muted">
@@ -183,6 +206,21 @@
                   >({{ t('productDetail.skuStockOut') }})</span>
                 </button>
               </div>
+            </div>
+
+            <!-- Selected SKU stock info -->
+            <div v-if="selectedSku" class="mb-4 flex items-center gap-2 text-xs">
+              <span class="theme-text-muted">{{ t('quickBuy.stock') }}:</span>
+              <span
+                class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium"
+                :class="skuStockBadgeClass(selectedSku)"
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full"
+                  :class="skuStockDotClass(selectedSku)"
+                />
+                {{ skuStockText(selectedSku) }}
+              </span>
             </div>
 
             <!-- Quantity -->
@@ -303,6 +341,8 @@ const {
   getPromotionPriceAmount,
   hasSkuPromotionPrice,
   getSkuPromotionPriceAmount,
+  hasPromotionRules,
+  getPromotionRules,
 } = useProductLabels()
 
 const selectedSkuId = ref(0)
@@ -310,6 +350,23 @@ const quantity = ref(1)
 const purchaseWarning = ref('')
 
 const productTitle = computed(() => getLocalizedText(props.product?.title))
+const productDescription = computed(() => getLocalizedText(props.product?.description))
+
+const formatPromotionRule = (rule: any) => {
+  const amount = formatPrice(rule.min_amount, siteCurrency.value)
+  const value = rule.type === 'percent' ? String(rule.value) : formatPrice(rule.value, siteCurrency.value)
+  const hasMin = Number(rule.min_amount) > 0
+  switch (rule.type) {
+    case 'percent':
+      return hasMin ? t('products.promotionHintPercent', { amount, value }) : t('products.promotionHintPercentNoMin', { value })
+    case 'fixed':
+      return hasMin ? t('products.promotionHintFixed', { amount, value }) : t('products.promotionHintFixedNoMin', { value })
+    case 'special_price':
+      return hasMin ? t('products.promotionHintSpecial', { amount, value }) : t('products.promotionHintSpecialNoMin', { value })
+    default:
+      return rule.name || ''
+  }
+}
 
 const productImage = computed(() => {
   const p = props.product
@@ -420,6 +477,14 @@ const skuStockBadgeClass = (sku: any) => {
   return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
 }
 
+const skuStockDotClass = (sku: any) => {
+  const available = skuAvailableStock(sku)
+  if (available === null) return 'bg-slate-400 dark:bg-slate-500'
+  if (available <= 0) return 'bg-rose-500 dark:bg-rose-400'
+  if (available <= 5) return 'bg-amber-500 dark:bg-amber-400'
+  return 'bg-emerald-500 dark:bg-emerald-400'
+}
+
 const skuDisplayText = (sku: any) => buildSkuDisplayText({
   skuCode: sku?.sku_code,
   specValues: sku?.spec_values,
@@ -470,7 +535,8 @@ const handleAddToCart = () => {
 
   const sku = selectedSku.value
   const available = skuAvailableStock(sku)
-  const nextQuantity = selectedCartQuantity() + quantity.value
+  const cartQty = selectedCartQuantity()
+  const nextQuantity = cartQty + quantity.value
   const productLimit = normalizeOptionalLimitNumber(props.product?.max_purchase_quantity)
   let limit: number | null = productLimit
   if (available !== null) {
@@ -479,11 +545,15 @@ const handleAddToCart = () => {
   if (limit !== null && nextQuantity > limit) {
     if (available !== null && limit === available && (productLimit === null || available <= productLimit)) {
       purchaseWarning.value = available > 0
-        ? t('productDetail.addCartStockExceeded', { count: available })
+        ? (cartQty > 0
+            ? t('productDetail.addCartStockExceededWithCart', { count: available, cartCount: cartQty })
+            : t('productDetail.addCartStockExceeded', { count: available }))
         : t('productDetail.stockUnavailable')
       return
     }
-    purchaseWarning.value = t('productDetail.addCartLimitExceeded', { count: limit })
+    purchaseWarning.value = cartQty > 0
+      ? t('productDetail.addCartLimitExceededWithCart', { count: limit, cartCount: cartQty })
+      : t('productDetail.addCartLimitExceeded', { count: limit })
     return
   }
 

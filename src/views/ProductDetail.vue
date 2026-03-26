@@ -268,6 +268,43 @@
                 </div>
               </div>
 
+              <!-- Quantity Selector -->
+                <div class="mb-8">
+                  <h2 class="mb-3 text-sm font-bold uppercase tracking-widest theme-text-muted">
+                    {{ t('productDetail.quantity') }}
+                  </h2>
+                  <div class="flex items-center rounded-lg border theme-border overflow-hidden w-fit">
+                    <button
+                      type="button"
+                      class="w-10 h-10 flex items-center justify-center theme-text-secondary hover:bg-gray-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
+                      :disabled="quantity <= 1"
+                      @click="quantity = Math.max(1, quantity - 1)"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      class="w-14 h-10 text-center text-sm font-semibold theme-text-primary border-x theme-border bg-transparent outline-none tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      :value="quantity"
+                      @change="handleQuantityInput($event)"
+                      @keydown.enter.prevent="($event.target as HTMLInputElement)?.blur()"
+                    />
+                    <button
+                      type="button"
+                      class="w-10 h-10 flex items-center justify-center theme-text-secondary hover:bg-gray-50 dark:hover:bg-white/5 transition-colors disabled:opacity-30"
+                      :disabled="quantityEffectiveLimit !== null && quantity >= quantityEffectiveLimit"
+                      @click="quantity = quantity + 1"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
               <!-- Purchase Actions (Desktop + original position) -->
               <div ref="purchaseActionsRef" class="mt-auto space-y-6">
                 <p v-if="cannotPurchaseReason" class="rounded-xl border theme-alert-danger px-4 py-3 text-sm font-semibold">
@@ -441,6 +478,7 @@ const loading = ref(true)
 const product = ref<any>(null)
 const currentImage = ref<string>('')
 const selectedSkuId = ref(0)
+const quantity = ref(1)
 const purchaseWarning = ref('')
 const purchaseActionsRef = ref<HTMLElement | null>(null)
 const showMobileBar = ref(false)
@@ -576,6 +614,28 @@ const skuStockBadgeClass = (sku: any) => {
   return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
 }
 
+const quantityEffectiveLimit = computed(() => {
+  const sku = selectedSku.value
+  const available = skuAvailableStock(sku)
+  const productLimit = normalizeOptionalLimitNumber(product.value?.max_purchase_quantity)
+  let limit: number | null = productLimit
+  if (available !== null) {
+    limit = limit === null ? available : Math.min(limit, available)
+  }
+  return limit
+})
+
+const handleQuantityInput = (event: Event) => {
+  const val = parseInt((event.target as HTMLInputElement).value, 10)
+  if (isNaN(val) || val < 1) {
+    quantity.value = 1
+  } else if (quantityEffectiveLimit.value !== null && val > quantityEffectiveLimit.value) {
+    quantity.value = quantityEffectiveLimit.value
+  } else {
+    quantity.value = val
+  }
+}
+
 const purchaseType = computed(() => product.value?.purchase_type || 'member')
 const requiresLogin = computed(() => purchaseType.value === 'member' && !userAuthStore.isAuthenticated)
 const requiresSKUSelection = computed(() => activeSkus.value.length > 1 && !selectedSku.value)
@@ -661,7 +721,7 @@ const addToCart = () => {
   const sku = selectedSku.value
   const available = skuAvailableStock(sku)
   const cartQty = selectedCartQuantity()
-  const nextQuantity = cartQty + 1
+  const nextQuantity = cartQty + quantity.value
   const productLimit = normalizeOptionalLimitNumber(product.value?.max_purchase_quantity)
   let effectiveLimit: number | null = productLimit
   if (available !== null) {
@@ -700,8 +760,8 @@ const addToCart = () => {
     purchaseType: product.value.purchase_type,
     fulfillmentType: product.value.fulfillment_type,
     manualFormSchema: product.value.manual_form_schema || {},
-    quantity: 1,
-  })
+    quantity: quantity.value,
+  }, quantity.value)
   toast.success(t('toast.addedToCart'))
 }
 
@@ -721,7 +781,7 @@ const buyNow = () => {
   if (available !== null) {
     limit = limit === null ? available : Math.min(limit, available)
   }
-  if (limit !== null && 1 > limit) {
+  if (limit !== null && quantity.value > limit) {
     purchaseWarning.value = available !== null && limit === available
       ? (available > 0 ? t('productDetail.addCartStockExceeded', { count: available }) : t('productDetail.stockUnavailable'))
       : t('productDetail.addCartLimitExceeded', { count: limit })
@@ -747,7 +807,7 @@ const buyNow = () => {
     purchaseType: product.value.purchase_type,
     fulfillmentType: product.value.fulfillment_type,
     manualFormSchema: product.value.manual_form_schema || {},
-    quantity: 1,
+    quantity: quantity.value,
   })
   router.push('/checkout?mode=buynow')
 }
@@ -842,8 +902,15 @@ watch(
   () => selectedSkuId.value,
   () => {
     purchaseWarning.value = ''
+    quantity.value = 1
   }
 )
+
+watch(quantityEffectiveLimit, (limit) => {
+  if (limit !== null && quantity.value > limit) {
+    quantity.value = Math.max(1, limit)
+  }
+})
 
 onUnmounted(() => {
   debouncedLoadProduct.cancel()

@@ -873,6 +873,7 @@ const messages = {
         productDetail: {
             description: '商品描述',
             details: '详细信息',
+            quantity: '购买数量',
             notFound: '商品不存在',
             backToProducts: '返回商品列表',
             loginToBuy: '登录后购买',
@@ -1034,6 +1035,7 @@ const messages = {
         productDetail: {
             description: '商品描述',
             details: '詳細資訊',
+            quantity: '購買數量',
             notFound: '商品不存在',
             backToProducts: '返回商品列表',
             loginToBuy: '登入後購買',
@@ -1941,6 +1943,7 @@ const messages = {
         productDetail: {
             description: 'Description',
             details: 'Details',
+            quantity: 'Quantity',
             notFound: 'Product not found',
             backToProducts: 'Back to Products',
             loginToBuy: 'Login to buy',

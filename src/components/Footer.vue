@@ -1,7 +1,7 @@
 <template>
   <footer
     class="relative theme-panel-strong theme-text-secondary border-t theme-border overflow-hidden">
-    <div class="container mx-auto px-4 py-16 relative z-10">
+    <div class="container mx-auto px-4 py-16 relative">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-16">
         <!-- Brand -->
         <div class="col-span-2 space-y-6">

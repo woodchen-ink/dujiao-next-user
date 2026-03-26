@@ -17,7 +17,6 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
 import { useAppStore } from './stores/app'
 import Navbar from './components/Navbar.vue'
 import Footer from './components/Footer.vue'
@@ -26,11 +25,8 @@ import Toast from './components/Toast.vue'
 import BackToTop from './components/BackToTop.vue'
 import MobileBottomNav from './components/MobileBottomNav.vue'
 
+// config 由 router.beforeEach 统一加载，无需在此重复调用
 const appStore = useAppStore()
-
-onMounted(() => {
-  appStore.loadConfig()
-})
 </script>
 
 <style>

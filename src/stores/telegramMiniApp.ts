@@ -8,6 +8,8 @@ import {
   createTelegramMiniAppSnapshot,
   getTelegramWebApp,
   initializeTelegramWebApp,
+  isTelegramUrlEnvironment,
+  loadTelegramWebAppScript,
   openTelegramCompatibleLink,
   readTelegramMiniAppSnapshot,
 } from '../utils/telegramMiniApp'
@@ -70,7 +72,7 @@ export const useTelegramMiniAppStore = defineStore('telegram-mini-app', () => {
     webApp.BackButton.show()
   }
 
-  const init = () => {
+  const init = async () => {
     if (initialized.value) {
       syncSnapshot()
       applyBackButtonState()
@@ -78,6 +80,17 @@ export const useTelegramMiniAppStore = defineStore('telegram-mini-app', () => {
     }
 
     initialized.value = true
+
+    // Only load the Telegram SDK script if we detect Telegram environment in the URL
+    if (isTelegramUrlEnvironment()) {
+      try {
+        await loadTelegramWebAppScript()
+      } catch {
+        // Script failed to load — continue without Telegram features
+        return
+      }
+    }
+
     const snapshot = initializeTelegramWebApp()
     isMiniApp.value = snapshot.isMiniApp
     isReady.value = snapshot.isReady

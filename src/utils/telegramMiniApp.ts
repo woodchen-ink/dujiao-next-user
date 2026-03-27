@@ -1,5 +1,6 @@
 import type { TelegramWebApp, TelegramWebAppThemeParams } from '../types/telegram-webapp'
 
+const TELEGRAM_WEB_APP_SCRIPT_URL = 'https://telegram.org/js/telegram-web-app.js?61'
 const TELEGRAM_ROOT_DATASET_KEY = 'telegramMiniApp'
 const TELEGRAM_COLOR_SCHEME_DATASET_KEY = 'telegramColorScheme'
 const TELEGRAM_PLATFORM_DATASET_KEY = 'telegramPlatform'
@@ -150,6 +151,31 @@ export const openTelegramCompatibleLink = (url: string, options: { tryInstantVie
   if (typeof window !== 'undefined') {
     window.open(target, '_blank', 'noopener')
   }
+}
+
+
+export const isTelegramUrlEnvironment = (): boolean => {
+  if (typeof window === 'undefined') return false
+  const hash = window.location.hash || ''
+  return hash.includes('tgWebAppData') || hash.includes('tgWebAppVersion') || hash.includes('tgWebAppPlatform')
+}
+
+let scriptLoadPromise: Promise<void> | null = null
+
+
+export const loadTelegramWebAppScript = (): Promise<void> => {
+  if (getTelegramWebApp()) return Promise.resolve()
+  if (scriptLoadPromise) return scriptLoadPromise
+
+  scriptLoadPromise = new Promise<void>((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = TELEGRAM_WEB_APP_SCRIPT_URL
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Telegram Web App script'))
+    document.head.appendChild(script)
+  })
+
+  return scriptLoadPromise
 }
 
 export const buildTelegramMiniAppEntryLink = (botUsername: string, miniAppURL: string) => {

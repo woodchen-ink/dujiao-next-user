@@ -16,9 +16,9 @@ app.use(head)
 app.use(router)
 app.use(i18n)
 
-useTelegramMiniAppStore(pinia).init()
-
-app.mount('#app')
+useTelegramMiniAppStore(pinia).init().then(() => {
+  app.mount('#app')
+})
 
 void router.isReady().then(() => {
     warmupCommonRoutes()

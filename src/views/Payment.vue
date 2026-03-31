@@ -269,13 +269,19 @@
                     </div>
                   </div>
                   <label class="inline-flex items-center gap-2 text-xs theme-text-secondary">
-                    <input v-model="useBalance" type="checkbox" class="h-4 w-4 accent-primary" />
+                    <input v-model="useBalance" type="checkbox" class="h-4 w-4 accent-primary" :disabled="walletOnlyPayment" />
                     <span>{{ t('payment.useBalance') }}</span>
                   </label>
                 </div>
+                <div v-if="walletOnlyPayment" class="mt-3 text-xs text-amber-600 dark:text-amber-400">
+                  {{ t('payment.walletOnlyHint') }}
+                </div>
                 <div v-if="useBalance" class="mt-3 space-y-1 text-xs theme-text-muted">
                   <div>{{ t('payment.walletDeductLabel') }}：{{ expectedWalletPaidDisplay }}</div>
-                  <div>{{ t('payment.onlinePayLabel') }}：{{ expectedOnlinePayDisplay }}</div>
+                  <div v-if="!walletOnlyPayment">{{ t('payment.onlinePayLabel') }}：{{ expectedOnlinePayDisplay }}</div>
+                  <div v-if="walletOnlyPayment && expectedOnlinePayCents > 0" class="text-amber-600 dark:text-amber-400">
+                    {{ t('payment.walletInsufficientHint') }}
+                  </div>
                 </div>
               </div>
               <div v-if="cachedPayment"
@@ -297,6 +303,7 @@
                 </div>
               </div>
               <PaymentChannelSelector
+                v-if="!walletOnlyPayment"
                 :channels="channels"
                 :model-value="selectedChannelId"
                 :show-balance-option="showBalanceOption"
@@ -385,7 +392,13 @@
             {{ t('payment.walletPayOnly') }}
           </div>
           <div
-            v-else-if="requiresOnlineChannel && !orderExpired && !orderCanceled"
+            v-else-if="walletOnlyPayment && expectedOnlinePayCents > 0 && !orderExpired && !orderCanceled"
+            class="mb-4 rounded-lg border p-3 text-xs theme-alert-warning"
+          >
+            {{ t('payment.walletInsufficientHint') }}
+          </div>
+          <div
+            v-else-if="!walletOnlyPayment && requiresOnlineChannel && !orderExpired && !orderCanceled"
             class="mb-4 rounded-lg border p-3 text-xs theme-alert-warning"
           >
             {{ t('payment.selectChannelError') }}
@@ -514,6 +527,7 @@ const orderNoResolved = computed(() => {
 const backLink = computed(() => (isGuest.value ? '/guest/orders' : '/me/orders'))
 const hasGuestAuth = computed(() => Boolean(guestAuth.value.email && guestAuth.value.order_password))
 const showGuestAuthForm = computed(() => isGuest.value && (!hasGuestAuth.value || guestAuthError.value))
+const walletOnlyPayment = computed(() => !!appStore.config?.wallet_only_payment)
 const showBalanceOption = computed(() => !isGuest.value)
 
 const flowSteps = computed(() => ([
@@ -637,6 +651,10 @@ watch(
   },
   { immediate: true }
 )
+
+watch(walletOnlyPayment, (v) => {
+  if (v) useBalance.value = true
+}, { immediate: true })
 
 const expiresAtMs = computed(() => {
   const raw = paymentResult.value?.expires_at || order.value?.expires_at
@@ -792,7 +810,8 @@ const requiresOnlineChannel = computed(() => {
 })
 const canSubmitPayment = computed(() => {
   if (submitting.value) return false
-  if (requiresOnlineChannel.value && !selectedChannelId.value) return false
+  if (walletOnlyPayment.value && expectedOnlinePayCents.value > 0) return false
+  if (!walletOnlyPayment.value && requiresOnlineChannel.value && !selectedChannelId.value) return false
   if (orderExpired.value || orderCanceled.value) return false
   return true
 })

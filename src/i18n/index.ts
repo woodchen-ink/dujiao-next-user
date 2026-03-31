@@ -696,6 +696,8 @@ const messages = {
             useBalance: '优先使用余额支付',
             walletDeductLabel: '余额抵扣',
             onlinePayLabel: '在线支付',
+            walletOnlyHint: '当前仅支持钱包余额支付',
+            walletInsufficientHint: '钱包余额不足，请先充值',
             feeFree: '免手续费',
             channelTypes: {
                 wechat: '微信',
@@ -1665,6 +1667,8 @@ const messages = {
             useBalance: '優先使用餘額支付',
             walletDeductLabel: '餘額抵扣',
             onlinePayLabel: '線上支付',
+            walletOnlyHint: '目前僅支援錢包餘額支付',
+            walletInsufficientHint: '錢包餘額不足，請先儲值',
             feeFree: '免手續費',
             channelTypes: {
                 wechat: '微信',
@@ -2595,6 +2599,8 @@ const messages = {
             useBalance: 'Use wallet balance first',
             walletDeductLabel: 'Wallet deduction',
             onlinePayLabel: 'Online payment',
+            walletOnlyHint: 'Only wallet balance payment is accepted',
+            walletInsufficientHint: 'Insufficient wallet balance, please recharge first',
             feeFree: 'No fee',
             channelTypes: {
                 wechat: 'WeChat',

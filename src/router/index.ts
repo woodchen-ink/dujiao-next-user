@@ -297,6 +297,11 @@ const router = createRouter({
             meta: { userGuest: true }
         },
         {
+            path: '/auth/czl-connect/callback',
+            name: 'user-czl-connect-callback',
+            component: () => import('../views/auth/CZLConnectCallback.vue'),
+        },
+        {
             path: '/:pathMatch(.*)*',
             name: 'not-found',
             component: () => import('../views/NotFound.vue'),

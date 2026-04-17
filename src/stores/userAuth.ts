@@ -105,6 +105,19 @@ export const useUserAuthStore = defineStore('user-auth', () => {
         }
     }
 
+    const czlConnectLogin = async (payload: { code: string; state: string }) => {
+        loading.value = true
+        try {
+            const response = await userAuthAPI.czlConnectCallback(payload)
+            const { token: accessToken, user: userData, return_to: returnTo } = response.data.data
+            setToken(accessToken)
+            setUser(userData)
+            return { returnTo: typeof returnTo === 'string' ? returnTo : '' }
+        } finally {
+            loading.value = false
+        }
+    }
+
     const forgotPassword = async (payload: any) => {
         loading.value = true
         try {
@@ -143,6 +156,7 @@ export const useUserAuthStore = defineStore('user-auth', () => {
         login,
         telegramLogin,
         telegramMiniAppLogin,
+        czlConnectLogin,
         forgotPassword,
         syncUserProfile,
         logout,

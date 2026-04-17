@@ -9,6 +9,12 @@ export const userAuthAPI = {
     telegramMiniAppLogin: (data: TelegramMiniAppAuthPayload) =>
         userApi.post('/auth/telegram/miniapp/login', data),
     forgotPassword: (data: any) => userApi.post('/auth/forgot-password', data),
+    czlConnectAuthorize: (data: { return_to?: string; upstream_providers?: string }) =>
+        userApi.post('/auth/czl-connect/authorize', data),
+    czlConnectCallback: (data: { code: string; state: string }) =>
+        userApi.post('/auth/czl-connect/callback', data),
+    czlConnectRefresh: (data: { refresh_token: string }) =>
+        userApi.post('/auth/czl-connect/refresh', data),
 }
 
 export const captchaAPI = {

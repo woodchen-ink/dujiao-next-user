@@ -37,16 +37,6 @@
       :loading="userProfileStore.loadingLoginLogs"
       :logs="userProfileStore.recentLoginLogs"
     />
-
-    <PasswordChangeForm
-      v-if="canManagePassword"
-      :requires-old-password="requiresOldPassword"
-      v-model:old-password="passwordForm.oldPassword"
-      v-model:new-password="passwordForm.newPassword"
-      v-model:confirm-password="passwordForm.confirmPassword"
-      :changing-password="userProfileStore.changingPassword"
-      @submit="handleChangePassword"
-    />
   </div>
 </template>
 
@@ -55,25 +45,16 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { pageAlertClass, type PageAlert } from '../../utils/alerts'
 import { useUserProfileStore } from '../../stores/userProfile'
-import { useUserAuthStore } from '../../stores/userAuth'
 import EmailChangeForm from '../../components/security/EmailChangeForm.vue'
 import LoginHistorySection from '../../components/security/LoginHistorySection.vue'
-import PasswordChangeForm from '../../components/security/PasswordChangeForm.vue'
 
 const { t } = useI18n()
 const userProfileStore = useUserProfileStore()
-const userAuthStore = useUserAuthStore()
 
 const securityForm = reactive({
   newEmail: '',
   oldCode: '',
   newCode: '',
-})
-
-const passwordForm = reactive({
-  oldPassword: '',
-  newPassword: '',
-  confirmPassword: '',
 })
 
 const securityAlert = ref<PageAlert | null>(null)
@@ -82,9 +63,6 @@ const newCodeCooldown = ref(0)
 let cooldownTimer: number | null = null
 const emailChangeMode = computed(() => userProfileStore.profile?.email_change_mode || 'change_with_old_and_new')
 const requiresOldEmailCode = computed(() => emailChangeMode.value !== 'bind_only')
-const canManagePassword = computed(() => requiresOldEmailCode.value)
-const passwordChangeMode = computed(() => userProfileStore.profile?.password_change_mode || 'change_with_old')
-const requiresOldPassword = computed(() => passwordChangeMode.value !== 'set_without_old')
 const currentEmailDisplay = computed(() => {
   if (!requiresOldEmailCode.value) {
     return t('personalCenter.security.bindOnlyEmailDisplay')
@@ -201,58 +179,6 @@ const handleChangeEmail = async () => {
       ? t('personalCenter.security.changeEmailSuccess')
       : t('personalCenter.security.bindEmailSuccess'),
   }
-}
-
-const handleChangePassword = async () => {
-  securityAlert.value = null
-  const oldPassword = passwordForm.oldPassword.trim()
-  const newPassword = passwordForm.newPassword.trim()
-  const confirmPassword = passwordForm.confirmPassword.trim()
-  const needOldPassword = requiresOldPassword.value
-
-  if (!newPassword || !confirmPassword || (needOldPassword && !oldPassword)) {
-    securityAlert.value = {
-      level: 'warning',
-      message: needOldPassword
-        ? t('personalCenter.security.changePasswordRequired')
-        : t('personalCenter.security.setPasswordRequired'),
-    }
-    return
-  }
-
-  if (newPassword !== confirmPassword) {
-    securityAlert.value = {
-      level: 'warning',
-      message: t('personalCenter.security.passwordMismatch'),
-    }
-    return
-  }
-
-  const payload = {
-    ...(needOldPassword ? { old_password: oldPassword } : {}),
-    new_password: newPassword,
-  }
-  const ok = await userProfileStore.changePassword(payload)
-
-  if (!ok) {
-    securityAlert.value = {
-      level: 'error',
-      message: userProfileStore.securityError || t('personalCenter.security.changePasswordFailed'),
-    }
-    return
-  }
-
-  passwordForm.oldPassword = ''
-  passwordForm.newPassword = ''
-  passwordForm.confirmPassword = ''
-  securityAlert.value = {
-    level: 'success',
-    message: needOldPassword
-      ? t('personalCenter.security.changePasswordSuccess')
-      : t('personalCenter.security.setPasswordSuccess'),
-  }
-
-  userAuthStore.logout('/auth/login?reason=password_changed')
 }
 
 onMounted(async () => {

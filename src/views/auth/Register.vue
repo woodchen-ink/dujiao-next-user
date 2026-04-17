@@ -155,13 +155,13 @@
             />
             <span class="leading-6">
               {{ t('auth.register.agreementPrefix') }}
-              <router-link to="/privacy" target="_blank" rel="noopener noreferrer" class="font-semibold theme-link">
+              <a :href="PRIVACY_POLICY_URL" target="_blank" rel="noopener noreferrer" class="font-semibold theme-link">
                 {{ t('footer.privacy') }}
-              </router-link>
+              </a>
               {{ t('auth.register.agreementAnd') }}
-              <router-link to="/terms" target="_blank" rel="noopener noreferrer" class="font-semibold theme-link">
+              <a :href="TERMS_OF_SERVICE_URL" target="_blank" rel="noopener noreferrer" class="font-semibold theme-link">
                 {{ t('footer.terms') }}
-              </router-link>
+              </a>
             </span>
           </label>
 
@@ -203,6 +203,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserAuthStore } from '../../stores/userAuth'
 import { useI18n } from 'vue-i18n'
+import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from '../../constants/legal'
 import { debounceAsync } from '../../utils/debounce'
 import { useAppStore } from '../../stores/app'
 import type { CaptchaPayload } from '../../api'
@@ -217,7 +218,7 @@ const { t } = useI18n()
 
 const brandSiteName = computed(() => {
   const siteName = String(appStore.config?.brand?.site_name || '').trim()
-  return siteName !== '' ? siteName : 'Dujiao-Next'
+  return siteName !== '' ? siteName : 'CZL Store'
 })
 
 const email = ref('')

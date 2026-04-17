@@ -5,12 +5,19 @@
     :style="{ transitionDuration: 'var(--ui-duration-normal)' }">
     <div class="container mx-auto px-4 flex items-center justify-between gap-4">
       <!-- Logo -->
-      <router-link to="/" class="theme-wordmark group relative" :title="brandSiteName">
+      <router-link to="/" class="theme-wordmark group relative gap-2.5" :title="brandSiteName">
+        <img
+          src="/logo.svg"
+          alt=""
+          aria-hidden="true"
+          class="h-6 w-6 shrink-0 object-contain" />
         <span class="theme-wordmark-text">{{ brandSiteName }}</span>
       </router-link>
 
       <!-- Desktop Menu -->
-      <div class="hidden lg:flex items-center space-x-1 min-w-0 overflow-x-auto scrollbar-hide">
+      <div
+        v-if="hasSecondaryMenuItems"
+        class="hidden lg:flex items-center space-x-1 min-w-0 overflow-x-auto scrollbar-hide">
         <template v-for="item in menuItems" :key="item.key">
           <router-link v-if="item.type === 'route'" :to="item.path"
             class="theme-nav-link text-sm relative group overflow-hidden flex items-center gap-1.5 whitespace-nowrap shrink-0"
@@ -329,6 +336,8 @@ const menuItems = computed<NavItem[]>(() => {
   return items
 })
 
+const hasSecondaryMenuItems = computed(() => menuItems.value.some((item) => item.key !== 'home'))
+
 // Mobile drawer only shows items NOT in the bottom nav (Home, Products, Cart, Me are in bottom nav)
 const mobileDrawerItems = computed<NavItem[]>(() => {
   const items: NavItem[] = [...buildBuiltinNavItems(), ...buildCustomNavItems()]
@@ -351,7 +360,7 @@ const cartCount = computed(() => cartStore.totalItems)
 
 const brandSiteName = computed(() => {
   const text = String(appStore.config?.brand?.site_name || '').trim()
-  return text !== '' ? text : 'Dujiao-Next'
+  return text !== '' ? text : 'CZL Store'
 })
 
 const toggleMobileMenu = () => {

@@ -4,7 +4,7 @@ import { createI18n } from 'vue-i18n'
 const messages = {
     'zh-CN': {
         common: {
-            siteName: 'Dujiao-Next',
+            siteName: 'CZL Store',
             loading: '加载中...',
             error: '错误',
             success: '成功',
@@ -14,9 +14,6 @@ const messages = {
             learnMore: '了解更多',
             scroll: '滚动',
             noContent: '暂无内容',
-            previousBanner: '上一张',
-            nextBanner: '下一张',
-            switchBanner: '切换到第 {n} 张',
             backToTop: '回到顶部',
             api: {
                 responseMissing: '服务器响应异常',
@@ -71,12 +68,6 @@ const messages = {
             backPrevious: '返回上一页',
         },
         home: {
-            hero: {
-                title: 'Dujiao-Next · D&N',
-                subtitle: '专业的产品与服务提供商',
-                cta: '浏览商品',
-                badge: '新一代数字商店',
-            },
             stats: {
                 activeUsers: '活跃用户',
                 premiumProducts: '精选商品',
@@ -156,8 +147,8 @@ const messages = {
         },
         about: {
             title: '关于我们',
-            subtitle: '了解Dujiao-Next',
-            introduction: 'Dujiao-Next（D&N）是一家专业的在线工作室，致力于为客户提供优质的产品和服务。我们以创新、专业、高效为核心价值观，不断追求卓越，为客户创造价值。',
+            subtitle: '了解CZL Store',
+            introduction: 'CZL Store（D&N）是一家专业的在线工作室，致力于为客户提供优质的产品和服务。我们以创新、专业、高效为核心价值观，不断追求卓越，为客户创造价值。',
             ourServices: '我们的服务',
             service1: '优质商品推荐与销售',
             service2: '专业的售前咨询服务',
@@ -545,6 +536,17 @@ const messages = {
                 telegramLoginFailed: 'Telegram 登录失败，请稍后重试',
                 telegramWidgetLoadFailed: 'Telegram 登录组件加载失败，请刷新后重试',
                 telegramInvalidPayload: 'Telegram 返回参数无效，请重试',
+                czlConnectButton: '使用 CZL Connect 登录',
+                czlConnectHint: '通过 CZL Connect 统一授权完成安全登录',
+                czlConnectPreparing: '正在跳转到 CZL Connect...',
+                czlConnectDisabled: 'CZL Connect 登录暂不可用，请稍后重试',
+                czlConnectAuthorizeFailed: '获取授权链接失败，请稍后重试',
+                czlConnectCallbackTitle: 'CZL Connect 授权回调',
+                czlConnectCallbackProcessing: '正在完成登录...',
+                czlConnectCallbackSuccess: '登录成功，正在跳转...',
+                czlConnectCallbackFailed: '登录失败',
+                czlConnectCallbackMissingParams: '授权参数不完整',
+                czlConnectCallbackRetry: '返回登录页重试',
             },
             register: {
                 title: '用户注册',
@@ -980,7 +982,7 @@ const messages = {
     },
     'zh-TW': {
         common: {
-            siteName: 'Dujiao-Next',
+            siteName: 'CZL Store',
             loading: '載入中...',
             error: '錯誤',
             success: '成功',
@@ -990,9 +992,6 @@ const messages = {
             learnMore: '了解更多',
             scroll: '捲動',
             noContent: '暫無內容',
-            previousBanner: '上一張',
-            nextBanner: '下一張',
-            switchBanner: '切換到第 {n} 張',
             backToTop: '回到頂部',
             api: {
                 responseMissing: '伺服器回應異常',
@@ -1047,12 +1046,6 @@ const messages = {
             backPrevious: '返回上一頁',
         },
         home: {
-            hero: {
-                title: 'Dujiao-Next · D&N',
-                subtitle: '專業的產品與服務提供商',
-                cta: '瀏覽商品',
-                badge: '新一代數位商店',
-            },
             stats: {
                 activeUsers: '活躍用戶',
                 premiumProducts: '精選商品',
@@ -1171,8 +1164,8 @@ const messages = {
         },
         about: {
             title: '關於我們',
-            subtitle: '了解Dujiao-Next',
-            introduction: 'Dujiao-Next（D&N）是一家專業的線上工作室，致力於為客戶提供優質的產品和服務。我們以創新、專業、高效為核心價值觀，不斷追求卓越，為客戶創造價值。',
+            subtitle: '了解CZL Store',
+            introduction: 'CZL Store（D&N）是一家專業的線上工作室，致力於為客戶提供優質的產品和服務。我們以創新、專業、高效為核心價值觀，不斷追求卓越，為客戶創造價值。',
             ourServices: '我們的服務',
             service1: '優質商品推薦與銷售',
             service2: '專業的售前諮詢服務',
@@ -1560,6 +1553,17 @@ const messages = {
                 telegramLoginFailed: 'Telegram 登入失敗，請稍後重試',
                 telegramWidgetLoadFailed: 'Telegram 登入元件載入失敗，請重新整理後重試',
                 telegramInvalidPayload: 'Telegram 回傳參數無效，請重試',
+                czlConnectButton: '使用 CZL Connect 登入',
+                czlConnectHint: '透過 CZL Connect 統一授權完成安全登入',
+                czlConnectPreparing: '正在跳轉至 CZL Connect...',
+                czlConnectDisabled: 'CZL Connect 登入暫不可用，請稍後重試',
+                czlConnectAuthorizeFailed: '取得授權連結失敗，請稍後重試',
+                czlConnectCallbackTitle: 'CZL Connect 授權回呼',
+                czlConnectCallbackProcessing: '正在完成登入...',
+                czlConnectCallbackSuccess: '登入成功，正在跳轉...',
+                czlConnectCallbackFailed: '登入失敗',
+                czlConnectCallbackMissingParams: '授權參數不完整',
+                czlConnectCallbackRetry: '返回登入頁重試',
             },
             register: {
                 title: '用戶註冊',
@@ -1956,7 +1960,7 @@ const messages = {
     },
     'en-US': {
         common: {
-            siteName: 'Dujiao-Next',
+            siteName: 'CZL Store',
             loading: 'Loading...',
             error: 'Error',
             success: 'Success',
@@ -1966,9 +1970,6 @@ const messages = {
             learnMore: 'Learn More',
             scroll: 'Scroll',
             noContent: 'No Content',
-            previousBanner: 'Previous',
-            nextBanner: 'Next',
-            switchBanner: 'Switch to slide {n}',
             backToTop: 'Back to Top',
             api: {
                 responseMissing: 'Server response is invalid',
@@ -2023,12 +2024,6 @@ const messages = {
             backPrevious: 'Go Back',
         },
         home: {
-            hero: {
-                title: 'Dujiao-Next',
-                subtitle: 'Professional Products and Services Provider',
-                cta: 'Browse Products',
-                badge: 'Next Gen Digital Store',
-            },
             stats: {
                 activeUsers: 'Active Users',
                 premiumProducts: 'Premium Products',
@@ -2147,8 +2142,8 @@ const messages = {
         },
         about: {
             title: 'About Us',
-            subtitle: 'Learn about Dujiao-Next',
-            introduction: 'Dujiao-Next is a professional online studio dedicated to providing high-quality products and services to our customers. Innovation, professionalism, and efficiency are our core values, and we constantly pursue excellence to create value for our customers.',
+            subtitle: 'Learn about CZL Store',
+            introduction: 'CZL Store is a professional online studio dedicated to providing high-quality products and services to our customers. Innovation, professionalism, and efficiency are our core values, and we constantly pursue excellence to create value for our customers.',
             ourServices: 'Our Services',
             service1: 'Premium Product Recommendations & Sales',
             service2: 'Professional Pre-sales Consulting',
@@ -2536,6 +2531,17 @@ const messages = {
                 telegramLoginFailed: 'Telegram login failed, please try again later',
                 telegramWidgetLoadFailed: 'Failed to load Telegram widget, please refresh and retry',
                 telegramInvalidPayload: 'Invalid Telegram response, please retry',
+                czlConnectButton: 'Sign in with CZL Connect',
+                czlConnectHint: 'Use CZL Connect unified authorization for secure login',
+                czlConnectPreparing: 'Redirecting to CZL Connect...',
+                czlConnectDisabled: 'CZL Connect sign-in is currently unavailable, please try again later',
+                czlConnectAuthorizeFailed: 'Failed to get authorization link, please try again later',
+                czlConnectCallbackTitle: 'CZL Connect Callback',
+                czlConnectCallbackProcessing: 'Completing sign-in...',
+                czlConnectCallbackSuccess: 'Sign-in successful, redirecting...',
+                czlConnectCallbackFailed: 'Sign-in failed',
+                czlConnectCallbackMissingParams: 'Authorization parameters missing',
+                czlConnectCallbackRetry: 'Back to login to retry',
             },
             register: {
                 title: 'User Registration',

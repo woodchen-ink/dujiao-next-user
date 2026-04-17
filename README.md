@@ -1,6 +1,6 @@
-# Dujiao-Next User Web
+# CZL Store User Web
 
-Dujiao-Next User Web is the customer-facing frontend for browsing products, placing orders, and completing payments.
+CZL Store User Web is the customer-facing frontend for browsing products, placing orders, and completing payments.
 
 ## Tech Stack
 

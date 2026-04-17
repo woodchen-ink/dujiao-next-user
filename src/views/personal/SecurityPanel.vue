@@ -17,4 +17,8 @@ const userProfileStore = useUserProfileStore()
 onMounted(async () => {
   await userProfileStore.loadRecentLoginLogs(10)
 })
+
+watch([showTelegramWidget, telegramBotUsername], () => {
+  renderTelegramWidget()
+})
 </script>

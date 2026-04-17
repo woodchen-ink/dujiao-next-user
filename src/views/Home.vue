@@ -316,3 +316,14 @@ onUnmounted(() => {
   listCleanup()
 })
 </script>
+
+<style scoped>
+.banner-fade-enter-active,
+.banner-fade-leave-active {
+  transition: opacity 300ms ease;
+}
+.banner-fade-enter-from,
+.banner-fade-leave-to {
+  opacity: 0;
+}
+</style>

@@ -251,6 +251,84 @@ const renderTelegramWidget = () => {
   telegramWidgetRef.value.appendChild(script)
 }
 
+const buildTelegramPayload = (raw: any): TelegramAuthPayload | null => {
+  const id = Number(raw?.id)
+  const authDate = Number(raw?.auth_date)
+  const hash = String(raw?.hash || '').trim()
+  if (!Number.isFinite(id) || id <= 0 || !Number.isFinite(authDate) || authDate <= 0 || hash === '') {
+    return null
+  }
+  return {
+    id,
+    first_name: String(raw?.first_name || '').trim(),
+    last_name: String(raw?.last_name || '').trim(),
+    username: String(raw?.username || '').trim(),
+    photo_url: String(raw?.photo_url || '').trim(),
+    auth_date: authDate,
+    hash,
+  }
+}
+
+const handleTelegramAuth = async (raw: any) => {
+  error.value = ''
+  const payload = buildTelegramPayload(raw)
+  if (!payload) {
+    error.value = t('auth.login.telegramInvalidPayload')
+    return
+  }
+  try {
+    await userAuthStore.telegramLogin(payload)
+    await redirectAfterLogin()
+  } catch (err: any) {
+    error.value = err.message || t('auth.login.telegramLoginFailed')
+  }
+}
+
+const tryTelegramMiniAppLogin = async () => {
+  if (!isTelegramMiniApp.value || miniAppInitData.value === '' || miniAppLoginAttempted.value || attemptingMiniAppLogin.value) {
+    return
+  }
+
+  miniAppLoginAttempted.value = true
+  attemptingMiniAppLogin.value = true
+  error.value = ''
+
+  try {
+    await userAuthStore.telegramMiniAppLogin(miniAppInitData.value)
+    await redirectAfterLogin()
+  } catch (err: any) {
+    error.value = err.message || t('auth.login.telegramLoginFailed')
+  } finally {
+    attemptingMiniAppLogin.value = false
+  }
+}
+
+const clearTelegramWidget = () => {
+  if (telegramWidgetRef.value) {
+    telegramWidgetRef.value.innerHTML = ''
+  }
+}
+
+const renderTelegramWidget = () => {
+  if (!showTelegramWidget.value || !telegramWidgetRef.value) {
+    clearTelegramWidget()
+    return
+  }
+  clearTelegramWidget()
+  const script = document.createElement('script')
+  script.async = true
+  script.src = 'https://telegram.org/js/telegram-widget.js?22'
+  script.setAttribute('data-telegram-login', telegramBotUsername.value)
+  script.setAttribute('data-size', 'large')
+  script.setAttribute('data-userpic', 'false')
+  script.setAttribute('data-request-access', 'write')
+  script.setAttribute('data-onauth', `${telegramCallbackName}(user)`)
+  script.onerror = () => {
+    error.value = t('auth.login.telegramWidgetLoadFailed')
+  }
+  telegramWidgetRef.value.appendChild(script)
+}
+
 onMounted(async () => {
   await appStore.loadConfig(true)
   const win = window as Window & Record<string, any>

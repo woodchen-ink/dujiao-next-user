@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { defineComponent, h } from 'vue'
 import { useUserAuthStore } from '../stores/userAuth'
 import { useAppStore } from '../stores/app'
 import { useTelegramMiniAppStore } from '../stores/telegramMiniApp'
+import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from '../constants/legal'
 import { captureAffiliateFromRoute } from '../utils/affiliate'
 
 type RouteComponentLoader = () => Promise<unknown>
@@ -28,6 +30,18 @@ const routeWarmupLoaders: RouteComponentLoader[] = [
 ]
 
 let hasScheduledRouteWarmup = false
+
+const redirectToExternal = (url: string) => {
+    if (typeof window !== 'undefined') {
+        window.location.replace(url)
+    }
+    return false
+}
+
+const ExternalRedirectView = defineComponent({
+    name: 'ExternalRedirectView',
+    setup: () => () => h('div'),
+})
 
 const shouldWarmupRoutes = () => {
     if (typeof window === 'undefined' || typeof navigator === 'undefined') {
@@ -255,14 +269,14 @@ const router = createRouter({
         {
             path: '/terms',
             name: 'terms',
-            component: () => import('../views/Legal.vue'),
-            props: { type: 'terms' }
+            component: ExternalRedirectView,
+            beforeEnter: () => redirectToExternal(TERMS_OF_SERVICE_URL),
         },
         {
             path: '/privacy',
             name: 'privacy',
-            component: () => import('../views/Legal.vue'),
-            props: { type: 'privacy' }
+            component: ExternalRedirectView,
+            beforeEnter: () => redirectToExternal(PRIVACY_POLICY_URL),
         },
         {
             path: '/auth/login',

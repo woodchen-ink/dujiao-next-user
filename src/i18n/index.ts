@@ -14,9 +14,6 @@ const messages = {
             learnMore: '了解更多',
             scroll: '滚动',
             noContent: '暂无内容',
-            previousBanner: '上一张',
-            nextBanner: '下一张',
-            switchBanner: '切换到第 {n} 张',
             backToTop: '回到顶部',
             api: {
                 responseMissing: '服务器响应异常',
@@ -71,12 +68,6 @@ const messages = {
             backPrevious: '返回上一页',
         },
         home: {
-            hero: {
-                title: 'CZL Store · D&N',
-                subtitle: '专业的产品与服务提供商',
-                cta: '浏览商品',
-                badge: '新一代数字商店',
-            },
             stats: {
                 activeUsers: '活跃用户',
                 premiumProducts: '精选商品',
@@ -990,9 +981,6 @@ const messages = {
             learnMore: '了解更多',
             scroll: '捲動',
             noContent: '暫無內容',
-            previousBanner: '上一張',
-            nextBanner: '下一張',
-            switchBanner: '切換到第 {n} 張',
             backToTop: '回到頂部',
             api: {
                 responseMissing: '伺服器回應異常',
@@ -1047,12 +1035,6 @@ const messages = {
             backPrevious: '返回上一頁',
         },
         home: {
-            hero: {
-                title: 'CZL Store · D&N',
-                subtitle: '專業的產品與服務提供商',
-                cta: '瀏覽商品',
-                badge: '新一代數位商店',
-            },
             stats: {
                 activeUsers: '活躍用戶',
                 premiumProducts: '精選商品',
@@ -1966,9 +1948,6 @@ const messages = {
             learnMore: 'Learn More',
             scroll: 'Scroll',
             noContent: 'No Content',
-            previousBanner: 'Previous',
-            nextBanner: 'Next',
-            switchBanner: 'Switch to slide {n}',
             backToTop: 'Back to Top',
             api: {
                 responseMissing: 'Server response is invalid',
@@ -2023,12 +2002,6 @@ const messages = {
             backPrevious: 'Go Back',
         },
         home: {
-            hero: {
-                title: 'CZL Store',
-                subtitle: 'Professional Products and Services Provider',
-                cta: 'Browse Products',
-                badge: 'Next Gen Digital Store',
-            },
             stats: {
                 activeUsers: 'Active Users',
                 premiumProducts: 'Premium Products',

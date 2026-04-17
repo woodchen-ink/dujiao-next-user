@@ -10,8 +10,8 @@
         </div>
         <div class="flex flex-col items-center gap-2 md:items-end">
           <div class="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center md:justify-end">
-            <a :href="PRIVACY_POLICY_URL" class="hover:text-gray-900 dark:hover:text-gray-400">{{ t('footer.privacy') || 'Privacy Policy' }}</a>
-            <a :href="TERMS_OF_SERVICE_URL" class="hover:text-gray-900 dark:hover:text-gray-400">{{ t('footer.terms') || 'Terms of Service' }}</a>
+            <a :href="PRIVACY_POLICY_URL" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 dark:hover:text-gray-400">{{ t('footer.privacy') || 'Privacy Policy' }}</a>
+            <a :href="TERMS_OF_SERVICE_URL" target="_blank" rel="noopener noreferrer" class="hover:text-gray-900 dark:hover:text-gray-400">{{ t('footer.terms') || 'Terms of Service' }}</a>
           </div>
           <div v-if="footerLinks.length" class="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center md:justify-end">
             <a

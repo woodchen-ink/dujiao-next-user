@@ -846,8 +846,17 @@ const canonicalUrl = computed(() => {
   return `${window.location.origin}/products/${product.value.slug}`
 })
 
+const pageTitle = computed(() => {
+  if (!product.value) return ''
+  const siteName = String(appStore.config?.brand?.site_name || '').trim()
+  const productTitle = getLocalizedText(product.value.title)
+  const category = product.value?.category?.name ? getLocalizedText(product.value.category.name) : ''
+  const prefix = category ? `${category} ${productTitle}` : productTitle
+  return siteName ? `${prefix} - ${siteName}` : prefix
+})
+
 useHead({
-  title: () => product.value ? getLocalizedText(product.value.title) : '',
+  title: () => pageTitle.value,
   link: () => {
     if (!canonicalUrl.value) return []
     return [{ rel: 'canonical', href: canonicalUrl.value }]
@@ -856,16 +865,14 @@ useHead({
     if (!product.value) return []
     const seoMeta = product.value.seo_meta || {}
     const seoKeywords = getLocalizedText(seoMeta.keywords) || (typeof seoMeta.keywords === 'string' ? seoMeta.keywords : '')
-    const seoDescription = getLocalizedText(seoMeta.description) || (typeof seoMeta.description === 'string' ? seoMeta.description : '')
+    const seoDescription = getLocalizedText(seoMeta.description) || (typeof seoMeta.description === 'string' ? seoMeta.description : '') || getLocalizedText(product.value.description)
     const tags = []
 
     if (seoKeywords) tags.push({ name: 'keywords', content: seoKeywords })
     if (seoDescription) tags.push({ name: 'description', content: seoDescription })
 
     tags.push({ property: 'og:type', content: 'product' })
-    if (product.value.title) {
-      tags.push({ property: 'og:title', content: getLocalizedText(product.value.title) })
-    }
+    tags.push({ property: 'og:title', content: pageTitle.value })
     if (seoDescription) {
       tags.push({ property: 'og:description', content: seoDescription })
     }
@@ -877,9 +884,7 @@ useHead({
     }
 
     tags.push({ name: 'twitter:card', content: 'summary_large_image' })
-    if (product.value.title) {
-      tags.push({ name: 'twitter:title', content: getLocalizedText(product.value.title) })
-    }
+    tags.push({ name: 'twitter:title', content: pageTitle.value })
     if (seoDescription) {
       tags.push({ name: 'twitter:description', content: seoDescription })
     }
@@ -893,7 +898,7 @@ useHead({
     if (!product.value) return []
     const title = getLocalizedText(product.value.title)
     const seoMeta = product.value.seo_meta || {}
-    const description = getLocalizedText(seoMeta.description) || (typeof seoMeta.description === 'string' ? seoMeta.description : '')
+    const description = getLocalizedText(seoMeta.description) || (typeof seoMeta.description === 'string' ? seoMeta.description : '') || getLocalizedText(product.value.description)
     const priceAmount = product.value.price_amount || '0'
     const currency = siteCurrency.value || 'CNY'
 

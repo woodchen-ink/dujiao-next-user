@@ -394,7 +394,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
 import { productAPI } from '../api'
@@ -414,7 +414,6 @@ import ProductImageGallery from '../components/product/ProductImageGallery.vue'
 import ProductMobileBar from '../components/product/ProductMobileBar.vue'
 
 const route = useRoute()
-const router = useRouter()
 const { push: lPush } = useLocalizedRouter()
 const { t } = useI18n()
 const appStore = useAppStore()

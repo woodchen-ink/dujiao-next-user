@@ -74,7 +74,7 @@ export function useLocalizedRouter() {
     const switchLocale = (newLocale: string) => {
         const slug = localeToSlug(newLocale)
         const currentPath = route.fullPath
-        const pathWithoutLocale = stripLocalePrefix(currentPath.split('?')[0])
+        const pathWithoutLocale = stripLocalePrefix(currentPath.split('?')[0] ?? '/')
         const query = currentPath.includes('?') ? currentPath.slice(currentPath.indexOf('?')) : ''
         return router.push(`/${slug}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}${query}`)
     }

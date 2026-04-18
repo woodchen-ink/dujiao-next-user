@@ -426,7 +426,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import DOMPurify from 'dompurify'
 import { userOrderAPI } from '../api'
 import { useAppStore } from '../stores/app'
@@ -443,7 +443,6 @@ import { useConfirmDialog } from '../composables/useConfirmDialog'
 import { toast } from '../composables/useToast'
 
 const route = useRoute()
-const router = useRouter()
 const { push: lPush } = useLocalizedRouter()
 const { confirm: showConfirm } = useConfirmDialog()
 const appStore = useAppStore()

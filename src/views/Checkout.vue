@@ -332,7 +332,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import { useI18n } from 'vue-i18n'
 import { useCartStore, type CartItem } from '../stores/cart'
@@ -352,7 +352,6 @@ import TurnstileCaptcha from '../components/captcha/TurnstileCaptcha.vue'
 import CheckoutManualForm from '../components/checkout/CheckoutManualForm.vue'
 import { useLocalized } from '../composables/useProduct'
 
-const router = useRouter()
 const { push: lPush } = useLocalizedRouter()
 const route = useRoute()
 const cartStore = useCartStore()

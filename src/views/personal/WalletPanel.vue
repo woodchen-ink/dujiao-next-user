@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { walletAPI } from '../../api'
 import { useAppStore } from '../../stores/app'
@@ -52,7 +52,6 @@ import WalletTransactionList from '../../components/wallet/WalletTransactionList
 
 const { t } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const { push: lPush, replace: lReplace } = useLocalizedRouter()
 const appStore = useAppStore()
 

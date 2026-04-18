@@ -421,7 +421,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import DOMPurify from 'dompurify'
 import { guestOrderAPI } from '../api'
@@ -436,7 +436,6 @@ import { buildSkuDisplayTextFromSnapshot } from '../utils/sku'
 import { getImageUrl } from '../utils/image'
 
 const route = useRoute()
-const router = useRouter()
 const { push: lPush } = useLocalizedRouter()
 const appStore = useAppStore()
 const { t } = useI18n()

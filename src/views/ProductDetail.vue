@@ -397,7 +397,8 @@ import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
-import { productAPI } from '../api'
+import { productAPI, categoryAPI } from '../api'
+import { createCategoryMap, buildCategoryPath, type PublicCategory } from '../utils/category'
 import { useLocalizedRouter, addLocalePrefix } from '../composables/useLocalizedRouter'
 import { getImageUrl } from '../utils/image'
 import { processHtmlForDisplay } from '../utils/content'
@@ -600,10 +601,26 @@ const cannotPurchaseReason = computed(() => {
   if (canPurchase.value) return ''
   return t('productDetail.stockUnavailable')
 })
+// 分类层级数据：用于展示"一级分类 / 二级分类"完整路径
+const categories = ref<PublicCategory[]>([])
+const categoryMap = computed(() => createCategoryMap(categories.value))
+
+// 分类名称：若为二级分类，展示为"一级 / 二级"
 const categoryName = computed(() => {
-  const category = product.value?.category?.name
-  return category ? getLocalizedText(category) : ''
+  const productCategory = product.value?.category
+  if (!productCategory) return ''
+  return buildCategoryPath(productCategory, categoryMap.value, getLocalizedText)
 })
+
+const loadCategories = async () => {
+  try {
+    const response = await categoryAPI.list()
+    categories.value = response.data.data || []
+  } catch (error) {
+    console.error('Failed to load categories:', error)
+    categories.value = []
+  }
+}
 
 const images = computed(() => {
   if (!product.value?.images) return []
@@ -850,8 +867,8 @@ const pageTitle = computed(() => {
   if (!product.value) return ''
   const siteName = String(appStore.config?.brand?.site_name || '').trim()
   const productTitle = getLocalizedText(product.value.title)
-  const category = product.value?.category?.name ? getLocalizedText(product.value.category.name) : ''
-  const prefix = category ? `${category} ${productTitle}` : productTitle
+  const categoryPath = categoryName.value
+  const prefix = categoryPath ? `${categoryPath} ${productTitle}` : productTitle
   return siteName ? `${prefix} - ${siteName}` : prefix
 })
 
@@ -918,8 +935,8 @@ useHead({
     }
     if (description) jsonLd.description = description
     if (images.value.length > 0) jsonLd.image = images.value
-    if (product.value.category?.name) {
-      jsonLd.category = getLocalizedText(product.value.category.name)
+    if (categoryName.value) {
+      jsonLd.category = categoryName.value
     }
 
     return [{
@@ -931,6 +948,7 @@ useHead({
 
 onMounted(() => {
   loadProduct()
+  loadCategories()
 })
 
 watch(

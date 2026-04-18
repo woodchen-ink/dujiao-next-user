@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { userAuthAPI } from '../api'
+import { addLocalePrefix } from '../composables/useLocalizedRouter'
+import { useAppStore } from './app'
 
 export const useUserAuthStore = defineStore('user-auth', () => {
     const router = useRouter()
@@ -142,8 +144,9 @@ export const useUserAuthStore = defineStore('user-auth', () => {
     }
 
     const logout = (redirect = '/auth/login') => {
+        const appStore = useAppStore()
         clearAuth()
-        router.push(redirect)
+        void router.push(addLocalePrefix(redirect, appStore.locale))
     }
 
     return {

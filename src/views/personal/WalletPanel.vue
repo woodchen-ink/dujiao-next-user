@@ -43,6 +43,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { walletAPI } from '../../api'
 import { useAppStore } from '../../stores/app'
+import { useLocalizedRouter } from '../../composables/useLocalizedRouter'
 import type { PageAlert } from '../../utils/alerts'
 import { amountToCents, basisPointsToPercent, calculateFeeCents, centsToAmount, rateToBasisPoints } from '../../utils/money'
 import WalletBalanceCard from '../../components/wallet/WalletBalanceCard.vue'
@@ -52,6 +53,7 @@ import WalletTransactionList from '../../components/wallet/WalletTransactionList
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const { push: lPush, replace: lReplace } = useLocalizedRouter()
 const appStore = useAppStore()
 
 const loading = ref(true)
@@ -332,7 +334,7 @@ const handleRecharge = async () => {
     rechargeForm.amount = ''
     rechargeForm.remark = ''
     if (rechargeNo) {
-      router.push(`/recharge-orders/${encodeURIComponent(rechargeNo)}`)
+      void lPush(`/recharge-orders/${encodeURIComponent(rechargeNo)}`)
     } else {
       walletAlert.value = {
         level: 'success',
@@ -368,7 +370,7 @@ const redirectRechargeReturn = () => {
   const orderNo = String(query.order_no || '').trim()
   const targetNo = rechargeNo || (/^WR/i.test(orderNo) ? orderNo : '')
   if (targetNo) {
-    router.replace(`/recharge-orders/${encodeURIComponent(targetNo)}${window.location.search}`)
+    void lReplace(`/recharge-orders/${encodeURIComponent(targetNo)}${window.location.search}`)
   }
 }
 

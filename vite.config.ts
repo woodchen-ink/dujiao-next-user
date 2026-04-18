@@ -31,11 +31,11 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://REMOVED_IP:1040',
+        target: 'https://store.czl.net',
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://REMOVED_IP:1040',
+        target: 'https://store.czl.net',
         changeOrigin: true,
       }
     }

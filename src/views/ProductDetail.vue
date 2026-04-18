@@ -35,10 +35,10 @@
       <div v-else-if="product">
         <!-- Breadcrumb -->
         <nav class="mb-8 flex items-center space-x-2 text-sm theme-text-muted font-medium">
-          <router-link to="/" class="theme-link-muted">{{ t('nav.home')
+          <router-link :to="addLocalePrefix('/', appStore.locale)" class="theme-link-muted">{{ t('nav.home')
           }}</router-link>
           <span>/</span>
-          <router-link to="/products" class="theme-link-muted">{{
+          <router-link :to="addLocalePrefix('/products', appStore.locale)" class="theme-link-muted">{{
             t('nav.products') }}</router-link>
           <span>/</span>
           <span class="theme-text-primary truncate max-w-[200px]">{{ getLocalizedText(product.title)
@@ -332,7 +332,7 @@
 
         <!-- Back Button -->
         <div class="mb-12 text-center">
-          <router-link to="/products"
+          <router-link :to="addLocalePrefix('/products', appStore.locale)"
             class="inline-flex items-center space-x-2 theme-link-muted transition-colors border-b border-transparent hover:border-current pb-1">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -382,7 +382,7 @@
             </svg>
             {{ t('errorBoundary.retry') }}
           </button>
-          <router-link to="/products"
+          <router-link :to="addLocalePrefix('/products', appStore.locale)"
             class="inline-block border theme-btn-secondary px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform">
             {{ t('productDetail.backToProducts') }}
           </router-link>
@@ -398,6 +398,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
 import { productAPI } from '../api'
+import { useLocalizedRouter, addLocalePrefix } from '../composables/useLocalizedRouter'
 import { getImageUrl } from '../utils/image'
 import { processHtmlForDisplay } from '../utils/content'
 import { useCartStore } from '../stores/cart'
@@ -414,6 +415,7 @@ import ProductMobileBar from '../components/product/ProductMobileBar.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { push: lPush } = useLocalizedRouter()
 const { t } = useI18n()
 const appStore = useAppStore()
 const cartStore = useCartStore()
@@ -659,7 +661,7 @@ const addToCart = () => {
   if (!canPurchase.value) return
   purchaseWarning.value = ''
   if (requiresLogin.value) {
-    router.push(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+    void lPush(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
     return
   }
   const sku = selectedSku.value
@@ -715,7 +717,7 @@ const buyNow = () => {
   if (!canPurchase.value) return
   if (!product.value) return
   if (requiresLogin.value) {
-    router.push(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+    void lPush(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
     return
   }
 
@@ -755,7 +757,7 @@ const buyNow = () => {
     paymentChannelIds: Array.isArray(product.value.payment_channel_ids) && product.value.payment_channel_ids.length > 0 ? product.value.payment_channel_ids : undefined,
     quantity: quantity.value,
   })
-  router.push('/checkout?mode=buynow')
+  void lPush('/checkout?mode=buynow')
 }
 
 // Mobile bar price display computed properties
@@ -798,7 +800,7 @@ const mobileBarProductPriceDisplay = computed(() => {
 })
 
 const goLogin = () => {
-  router.push(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+  void lPush(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
 }
 
 const loadProduct = async () => {

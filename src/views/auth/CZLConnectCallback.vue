@@ -36,6 +36,8 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useUserAuthStore } from '../../stores/userAuth'
+import { addLocalePrefix } from '../../composables/useLocalizedRouter'
+import { useAppStore } from '../../stores/app'
 
 const route = useRoute()
 const router = useRouter()
@@ -48,13 +50,14 @@ const errorMessage = ref('')
 
 // CZL Connect 授权完成后回跳到本页面，提取 code/state 并向后端换 token/登录
 const resolveRedirect = (returnTo: string): string => {
+  const appStore = useAppStore()
   const queryRedirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
-  const target = returnTo || queryRedirect || '/me/orders'
+  const target = returnTo || queryRedirect || addLocalePrefix('/me/orders', appStore.locale)
   // 仅允许站内相对跳转，防止 open redirect
   if (/^https?:\/\//i.test(target) || target.startsWith('//')) {
-    return '/me/orders'
+    return addLocalePrefix('/me/orders', appStore.locale)
   }
-  return target.startsWith('/') ? target : '/me/orders'
+  return target.startsWith('/') ? target : addLocalePrefix('/me/orders', appStore.locale)
 }
 
 onMounted(async () => {

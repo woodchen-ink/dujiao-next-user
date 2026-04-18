@@ -312,7 +312,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
+import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
 import { useCartStore } from '../stores/cart'
@@ -332,8 +333,8 @@ const emit = defineEmits<{
   'update:visible': [value: boolean]
 }>()
 
-const router = useRouter()
 const route = useRoute()
+const { push: lPush } = useLocalizedRouter()
 const { t } = useI18n()
 const appStore = useAppStore()
 const cartStore = useCartStore()
@@ -653,17 +654,17 @@ const handleBuyNow = () => {
     quantity: quantity.value,
   })
   close()
-  router.push('/checkout?mode=buynow')
+  void lPush('/checkout?mode=buynow')
 }
 
 const goLogin = () => {
   close()
-  router.push(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+  void lPush(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
 }
 
 const goToDetail = () => {
   close()
-  router.push(`/products/${props.product?.slug}`)
+  void lPush(`/products/${props.product?.slug}`)
 }
 
 const getProductImages = () => {

@@ -422,6 +422,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import DOMPurify from 'dompurify'
 import { guestOrderAPI } from '../api'
 import { useAppStore } from '../stores/app'
@@ -436,6 +437,7 @@ import { getImageUrl } from '../utils/image'
 
 const route = useRoute()
 const router = useRouter()
+const { push: lPush } = useLocalizedRouter()
 const appStore = useAppStore()
 const { t } = useI18n()
 
@@ -735,7 +737,7 @@ const fulfillmentDeliveryLines = (fulfillment: any) => {
 
 onMounted(() => {
   if (!route.params.order_no) {
-    router.push('/guest/orders')
+    void lPush('/guest/orders')
     return
   }
   loadSavedAuth()

@@ -104,15 +104,15 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import { useProductList } from '../composables/useProductList'
 import ProductCard from '../components/ProductCard.vue'
 import ProductQuickBuy from '../components/ProductQuickBuy.vue'
 import CategorySidebar from '../components/CategorySidebar.vue'
 import PaginationNav from '../components/PaginationNav.vue'
 
-const router = useRouter()
+const { push: lPush } = useLocalizedRouter()
 const { t } = useI18n()
 
 const {
@@ -148,7 +148,7 @@ const handleResize = () => {
 }
 
 const goToProduct = (slug: string) => {
-  router.push(`/products/${slug}`)
+  void lPush(`/products/${slug}`)
 }
 
 onMounted(async () => {

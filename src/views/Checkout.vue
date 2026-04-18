@@ -333,6 +333,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import { useI18n } from 'vue-i18n'
 import { useCartStore, type CartItem } from '../stores/cart'
 import { useBuyNowStore } from '../stores/buyNow'
@@ -352,6 +353,7 @@ import CheckoutManualForm from '../components/checkout/CheckoutManualForm.vue'
 import { useLocalized } from '../composables/useProduct'
 
 const router = useRouter()
+const { push: lPush } = useLocalizedRouter()
 const route = useRoute()
 const cartStore = useCartStore()
 const buyNowStore = useBuyNowStore()
@@ -1153,7 +1155,7 @@ const handleSubmit = async () => {
     const query = userAuthStore.isAuthenticated
       ? `order_no=${encodeURIComponent(responseData.order_no)}`
       : `guest=1&order_no=${encodeURIComponent(responseData.order_no)}`
-    router.push(`/pay?${query}`)
+    void lPush(`/pay?${query}`)
   } catch (err: any) {
     error.value = err.message || t('checkout.errors.submitFailed')
     if (guestCaptchaEnabled.value && captchaProvider.value === 'image') {

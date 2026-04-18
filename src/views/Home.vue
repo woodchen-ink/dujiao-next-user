@@ -202,7 +202,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import { useI18n } from 'vue-i18n'
 import { postAPI, productAPI } from '../api'
 import { getImageUrl } from '../utils/image'
@@ -216,7 +216,7 @@ import ProductQuickBuy from '../components/ProductQuickBuy.vue'
 import CategorySidebar from '../components/CategorySidebar.vue'
 import PaginationNav from '../components/PaginationNav.vue'
 
-const router = useRouter()
+const { push: lPush } = useLocalizedRouter()
 const { t } = useI18n()
 const { getLocalizedText } = useLocalized()
 const appStore = useAppStore()
@@ -271,12 +271,12 @@ const formatDate = (dateString: string) => {
 
 // Navigate to the product detail page.
 const goToProduct = (slug: string) => {
-  router.push(`/products/${slug}`)
+  void lPush(`/products/${slug}`)
 }
 
 // Navigate to the blog detail page.
 const goToPost = (slug: string) => {
-  router.push(`/blog/${slug}`)
+  void lPush(`/blog/${slug}`)
 }
 
 // Load featured products for the card-style homepage.

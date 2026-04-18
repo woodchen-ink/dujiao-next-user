@@ -110,14 +110,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../stores/app'
+import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import { postAPI } from '../api'
 import { getImageUrl } from '../utils/image'
 import { debounceAsync } from '../utils/debounce'
 
-const router = useRouter()
+const { push: lPush } = useLocalizedRouter()
 const { t } = useI18n()
 const appStore = useAppStore()
 
@@ -166,7 +166,7 @@ const loadPosts = async () => {
 const debouncedLoadPosts = debounceAsync(loadPosts, 300)
 
 const goToPost = (slug: string) => {
-  router.push(`/blog/${slug}`)
+  void lPush(`/blog/${slug}`)
 }
 
 const changePage = (page: number) => {

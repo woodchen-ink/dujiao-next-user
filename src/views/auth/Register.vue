@@ -206,6 +206,7 @@ import { useI18n } from 'vue-i18n'
 import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from '../../constants/legal'
 import { debounceAsync } from '../../utils/debounce'
 import { useAppStore } from '../../stores/app'
+import { addLocalePrefix } from '../../composables/useLocalizedRouter'
 import type { CaptchaPayload } from '../../api'
 import ImageCaptcha from '../../components/captcha/ImageCaptcha.vue'
 import TurnstileCaptcha from '../../components/captcha/TurnstileCaptcha.vue'
@@ -341,7 +342,7 @@ const performRegister = async () => {
       code: emailVerificationEnabled.value ? code.value : '',
       agreement_accepted: agreed.value,
     })
-    router.push('/me/orders')
+    void router.push(addLocalePrefix('/me/orders', appStore.locale))
   } catch (err: any) {
     error.value = err.message || t('auth.register.errors.registerFailed')
   }

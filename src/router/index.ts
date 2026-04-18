@@ -1,10 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, resolveComponent } from 'vue'
 import { useUserAuthStore } from '../stores/userAuth'
 import { useAppStore } from '../stores/app'
 import { useTelegramMiniAppStore } from '../stores/telegramMiniApp'
 import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from '../constants/legal'
 import { captureAffiliateFromRoute } from '../utils/affiliate'
+import { URL_SLUGS, DEFAULT_LOCALE, isValidSlug, slugToLocale, localeToSlug, addLocalePrefix } from '../composables/useLocalizedRouter'
 
 type RouteComponentLoader = () => Promise<unknown>
 
@@ -41,6 +42,12 @@ const redirectToExternal = (url: string) => {
 const ExternalRedirectView = defineComponent({
     name: 'ExternalRedirectView',
     setup: () => () => h('div'),
+})
+
+// 透传父路由的 RouterView，不引入额外布局层
+const LocaleLayout = defineComponent({
+    name: 'LocaleLayout',
+    setup: () => () => h(resolveComponent('RouterView')),
 })
 
 const shouldWarmupRoutes = () => {
@@ -111,6 +118,193 @@ export const warmupCommonRoutes = () => {
     window.addEventListener('load', startWarmup, { once: true })
 }
 
+// 所有页面路由定义（不含 locale 前缀），供嵌套使用
+const pageRoutes = [
+    {
+        path: '',
+        name: 'home',
+        component: homeViewLoader,
+    },
+    {
+        path: 'products',
+        name: 'products',
+        component: () => {
+            const appStore = useAppStore()
+            return appStore.config?.template_mode === 'list'
+                ? homeViewLoader()
+                : productsViewLoader()
+        },
+    },
+    {
+        path: 'categories/:slug',
+        name: 'category-products',
+        component: () => {
+            const appStore = useAppStore()
+            return appStore.config?.template_mode === 'list'
+                ? homeViewLoader()
+                : productsViewLoader()
+        },
+    },
+    {
+        path: 'products/:slug',
+        name: 'product-detail',
+        component: productDetailViewLoader,
+    },
+    {
+        path: 'cart',
+        name: 'cart',
+        component: cartViewLoader,
+    },
+    {
+        path: 'checkout',
+        name: 'checkout',
+        component: checkoutViewLoader,
+    },
+    {
+        path: 'pay',
+        name: 'payment',
+        component: paymentViewLoader,
+    },
+    {
+        path: 'me',
+        name: 'personal-center',
+        component: () => import('../views/PersonalCenter.vue'),
+        props: { section: 'overview' },
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'me/profile',
+        name: 'personal-center-profile',
+        component: () => import('../views/PersonalCenter.vue'),
+        props: { section: 'profile' },
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'me/security',
+        name: 'personal-center-security',
+        component: () => import('../views/PersonalCenter.vue'),
+        props: { section: 'security' },
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'me/orders',
+        name: 'personal-center-orders',
+        component: () => import('../views/PersonalCenter.vue'),
+        props: { section: 'orders' },
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'me/wallet',
+        name: 'personal-center-wallet',
+        component: () => import('../views/PersonalCenter.vue'),
+        props: { section: 'wallet' },
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'me/gift-cards',
+        name: 'personal-center-gift-cards',
+        component: () => import('../views/PersonalCenter.vue'),
+        props: { section: 'giftCard' },
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'me/api',
+        name: 'personal-center-api',
+        component: () => import('../views/PersonalCenter.vue'),
+        props: { section: 'api' },
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'me/affiliate',
+        name: 'personal-center-affiliate',
+        component: () => import('../views/PersonalCenter.vue'),
+        props: { section: 'affiliate' },
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'orders/:order_no',
+        name: 'order-detail',
+        component: () => import('../views/OrderDetail.vue'),
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'recharge-orders/:recharge_no',
+        name: 'recharge-order-detail',
+        component: () => import('../views/RechargeOrderDetail.vue'),
+        meta: { requiresUserAuth: true },
+    },
+    {
+        path: 'guest/orders',
+        name: 'guest-orders',
+        component: () => import('../views/GuestOrders.vue'),
+    },
+    {
+        path: 'guest/orders/:order_no',
+        name: 'guest-order-detail',
+        component: () => import('../views/GuestOrderDetail.vue'),
+    },
+    {
+        path: 'blog',
+        name: 'blog',
+        component: blogViewLoader,
+    },
+    {
+        path: 'blog/:slug',
+        name: 'blog-detail',
+        component: () => import('../views/BlogDetail.vue'),
+    },
+    {
+        path: 'notice',
+        name: 'notice',
+        component: noticeViewLoader,
+    },
+    {
+        path: 'about',
+        name: 'about',
+        component: () => import('../views/About.vue'),
+    },
+    {
+        path: 'terms',
+        name: 'terms',
+        component: ExternalRedirectView,
+        beforeEnter: () => redirectToExternal(TERMS_OF_SERVICE_URL),
+    },
+    {
+        path: 'privacy',
+        name: 'privacy',
+        component: ExternalRedirectView,
+        beforeEnter: () => redirectToExternal(PRIVACY_POLICY_URL),
+    },
+    {
+        path: 'auth/login',
+        name: 'user-login',
+        component: loginViewLoader,
+        meta: { userGuest: true },
+    },
+    {
+        path: 'auth/register',
+        name: 'user-register',
+        component: () => import('../views/auth/Register.vue'),
+        meta: { userGuest: true },
+    },
+    {
+        path: 'auth/forgot',
+        name: 'user-forgot',
+        component: () => import('../views/auth/Forgot.vue'),
+        meta: { userGuest: true },
+    },
+    {
+        path: 'auth/czl-connect/callback',
+        name: 'user-czl-connect-callback',
+        component: () => import('../views/auth/CZLConnectCallback.vue'),
+    },
+    {
+        path: ':pathMatch(.*)*',
+        name: 'not-found-locale',
+        component: () => import('../views/NotFound.vue'),
+    },
+]
+
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     scrollBehavior(to, _from, savedPosition) {
@@ -123,187 +317,30 @@ const router = createRouter({
         return { top: 0 }
     },
     routes: [
+        // 带 URL slug 前缀的路由组（cn / hk / en）
+        {
+            path: `/:locale(${URL_SLUGS.join('|')})`,
+            component: LocaleLayout,
+            children: pageRoutes,
+        },
+        // 根路径重定向到带 slug 的首页
         {
             path: '/',
-            name: 'home',
-            component: homeViewLoader,
-        },
-        {
-            path: '/products',
-            name: 'products',
-            component: () => {
-                const appStore = useAppStore()
-                return appStore.config?.template_mode === 'list'
-                    ? homeViewLoader()
-                    : productsViewLoader()
+            redirect: () => {
+                const saved = localStorage.getItem('locale') || DEFAULT_LOCALE
+                const slug = localeToSlug(saved)
+                return `/${slug}`
             },
         },
-        {
-            path: '/categories/:slug',
-            name: 'category-products',
-            component: () => {
-                const appStore = useAppStore()
-                return appStore.config?.template_mode === 'list'
-                    ? homeViewLoader()
-                    : productsViewLoader()
-            },
-        },
-        {
-            path: '/products/:slug',
-            name: 'product-detail',
-            component: productDetailViewLoader,
-        },
-        {
-            path: '/cart',
-            name: 'cart',
-            component: cartViewLoader,
-        },
-        {
-            path: '/checkout',
-            name: 'checkout',
-            component: checkoutViewLoader,
-        },
-        {
-            path: '/pay',
-            name: 'payment',
-            component: paymentViewLoader,
-        },
-        {
-            path: '/me',
-            name: 'personal-center',
-            component: () => import('../views/PersonalCenter.vue'),
-            props: { section: 'overview' },
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/me/profile',
-            name: 'personal-center-profile',
-            component: () => import('../views/PersonalCenter.vue'),
-            props: { section: 'profile' },
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/me/security',
-            name: 'personal-center-security',
-            component: () => import('../views/PersonalCenter.vue'),
-            props: { section: 'security' },
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/me/orders',
-            name: 'personal-center-orders',
-            component: () => import('../views/PersonalCenter.vue'),
-            props: { section: 'orders' },
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/me/wallet',
-            name: 'personal-center-wallet',
-            component: () => import('../views/PersonalCenter.vue'),
-            props: { section: 'wallet' },
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/me/gift-cards',
-            name: 'personal-center-gift-cards',
-            component: () => import('../views/PersonalCenter.vue'),
-            props: { section: 'giftCard' },
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/me/api',
-            name: 'personal-center-api',
-            component: () => import('../views/PersonalCenter.vue'),
-            props: { section: 'api' },
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/me/affiliate',
-            name: 'personal-center-affiliate',
-            component: () => import('../views/PersonalCenter.vue'),
-            props: { section: 'affiliate' },
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/orders/:order_no',
-            name: 'order-detail',
-            component: () => import('../views/OrderDetail.vue'),
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/recharge-orders/:recharge_no',
-            name: 'recharge-order-detail',
-            component: () => import('../views/RechargeOrderDetail.vue'),
-            meta: { requiresUserAuth: true }
-        },
-        {
-            path: '/guest/orders',
-            name: 'guest-orders',
-            component: () => import('../views/GuestOrders.vue'),
-        },
-        {
-            path: '/guest/orders/:order_no',
-            name: 'guest-order-detail',
-            component: () => import('../views/GuestOrderDetail.vue'),
-        },
-        {
-            path: '/blog',
-            name: 'blog',
-            component: blogViewLoader,
-        },
-        {
-            path: '/blog/:slug',
-            name: 'blog-detail',
-            component: () => import('../views/BlogDetail.vue'),
-        },
-        {
-            path: '/notice',
-            name: 'notice',
-            component: noticeViewLoader,
-        },
-        {
-            path: '/about',
-            name: 'about',
-            component: () => import('../views/About.vue'),
-        },
-        {
-            path: '/terms',
-            name: 'terms',
-            component: ExternalRedirectView,
-            beforeEnter: () => redirectToExternal(TERMS_OF_SERVICE_URL),
-        },
-        {
-            path: '/privacy',
-            name: 'privacy',
-            component: ExternalRedirectView,
-            beforeEnter: () => redirectToExternal(PRIVACY_POLICY_URL),
-        },
-        {
-            path: '/auth/login',
-            name: 'user-login',
-            component: loginViewLoader,
-            meta: { userGuest: true }
-        },
-        {
-            path: '/auth/register',
-            name: 'user-register',
-            component: () => import('../views/auth/Register.vue'),
-            meta: { userGuest: true }
-        },
-        {
-            path: '/auth/forgot',
-            name: 'user-forgot',
-            component: () => import('../views/auth/Forgot.vue'),
-            meta: { userGuest: true }
-        },
-        {
-            path: '/auth/czl-connect/callback',
-            name: 'user-czl-connect-callback',
-            component: () => import('../views/auth/CZLConnectCallback.vue'),
-        },
+        // 无 slug 前缀的旧路径，重定向到带 slug 版本
         {
             path: '/:pathMatch(.*)*',
             name: 'not-found',
+            beforeEnter: (to) => {
+                const saved = localStorage.getItem('locale') || DEFAULT_LOCALE
+                const slug = localeToSlug(saved)
+                return addLocalePrefix(to.path, slug) + (to.fullPath.includes('?') ? to.fullPath.slice(to.fullPath.indexOf('?')) : '')
+            },
             component: () => import('../views/NotFound.vue'),
         },
     ],
@@ -315,27 +352,36 @@ router.beforeEach(async (to, _from, next) => {
     const appStore = useAppStore()
     void captureAffiliateFromRoute(to)
 
+    // 从 URL slug 提取内部 locale 并同步到 store
+    const urlSlug = to.params.locale as string | undefined
+    if (urlSlug && isValidSlug(urlSlug)) {
+        const mappedLocale = slugToLocale(urlSlug)
+        if (mappedLocale !== appStore.locale) {
+            appStore.setLocale(mappedLocale)
+        }
+    }
+
     // Ensure config is loaded before checking template mode
     if (!appStore.config) {
         await appStore.loadConfig()
     }
 
+    const slug = localeToSlug(appStore.locale)
+
     if (to.meta.requiresUserAuth) {
         if (!userAuthStore.isAuthenticated) {
             const redirect = encodeURIComponent(to.fullPath)
-            next(`/auth/login?redirect=${redirect}`)
+            next(`/${slug}/auth/login?redirect=${redirect}`)
         } else {
             next()
         }
-    }
-    else if (to.meta.userGuest) {
+    } else if (to.meta.userGuest) {
         if (userAuthStore.isAuthenticated) {
-            next('/me/orders')
+            next(`/${slug}/me/orders`)
         } else {
             next()
         }
-    }
-    else {
+    } else {
         next()
     }
 })
@@ -350,7 +396,7 @@ router.afterEach(() => {
             router.back()
             return
         }
-        void router.push('/')
+        void router.push(`/${localeToSlug(appStore.locale)}`)
     })
 })
 

@@ -3,11 +3,13 @@ import { ref } from 'vue'
 import { configAPI } from '../api'
 import { applyCustomScripts } from '../utils/customScripts'
 import { useHead } from '@unhead/vue'
+import { SUPPORTED_LOCALES, LOCALE_TO_SLUG, URL_SLUGS } from '../composables/useLocalizedRouter'
 
 export const useAppStore = defineStore('app', () => {
     const locale = ref(localStorage.getItem('locale') || 'zh-CN')
     const config = ref<any>(null)
     const loading = ref(false)
+    const currentPath = ref(typeof window !== 'undefined' ? window.location.pathname : '/')
     // 服务器与客户端的时间偏移量（毫秒），serverTime = clientTime + offset
     const serverTimeOffset = ref(0)
 
@@ -15,6 +17,13 @@ export const useAppStore = defineStore('app', () => {
     const setLocale = (newLocale: string) => {
         locale.value = newLocale
         localStorage.setItem('locale', newLocale)
+    }
+
+    // locale 代码到 hreflang 值的映射
+    const localeToHreflang: Record<string, string> = {
+        'zh-CN': 'zh-Hans',
+        'zh-TW': 'zh-Hant',
+        'en-US': 'en',
     }
 
     // 全局响应式 SEO 配置
@@ -60,13 +69,36 @@ export const useAppStore = defineStore('app', () => {
             }
 
             return tags
-        }
+        },
+        link: () => {
+            if (typeof window === 'undefined') return []
+            // 当前路径去掉 locale 前缀，重新拼接各语言版本的 hreflang
+            const path = currentPath.value
+            const origin = window.location.origin
+            const pathWithoutLocale = path.replace(
+                new RegExp(`^/(${URL_SLUGS.join('|')})(/|$)`),
+                '/'
+            ) || '/'
+            const links = SUPPORTED_LOCALES.map((loc) => ({
+                rel: 'alternate',
+                hreflang: localeToHreflang[loc] || loc,
+                href: `${origin}/${LOCALE_TO_SLUG[loc]}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`,
+            }))
+            // x-default 指向简体中文
+            links.push({
+                rel: 'alternate',
+                hreflang: 'x-default',
+                href: `${origin}/cn${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`,
+            })
+            return links
+        },
     })
 
-    // 更新SEO信息 (向后兼容的方法)
+    // 更新SEO信息，在路由变化后同步当前路径（供 hreflang 使用）
     const applySEO = () => {
-        // 由于 useHead 已经是响应式的，这里不再需要显式调用
-        // 留空函数以防其他组件出错
+        if (typeof window !== 'undefined') {
+            currentPath.value = window.location.pathname
+        }
     }
 
     // 加载全局配置

@@ -6,7 +6,7 @@
           <h1 class="text-3xl font-black theme-text-primary mb-2">{{ t('orderDetail.title') }}</h1>
           <p class="theme-text-muted text-sm">{{ t('orderDetail.subtitle') }}</p>
         </div>
-        <router-link to="/me/orders"
+        <router-link :to="addLocalePrefix('/me/orders', appStore.locale)"
           class="theme-link-muted text-sm">{{
             t('orderDetail.backList') }}</router-link>
       </div>
@@ -49,7 +49,7 @@
               <span class="theme-badge px-3 py-1 text-xs font-medium" :class="statusClass(order.status)">
                 {{ statusLabel(order.status) }}
               </span>
-              <router-link v-if="order.status === 'pending_payment'" :to="`/pay?order_no=${order.order_no}`"
+              <router-link v-if="order.status === 'pending_payment'" :to="addLocalePrefix(`/pay?order_no=${order.order_no}`, appStore.locale)"
                 class="px-4 py-2 rounded-lg theme-btn-primary font-bold text-sm">
                 {{ t('orderDetail.payNow') }}
               </router-link>
@@ -430,6 +430,7 @@ import { useRoute, useRouter } from 'vue-router'
 import DOMPurify from 'dompurify'
 import { userOrderAPI } from '../api'
 import { useAppStore } from '../stores/app'
+import { useLocalizedRouter, addLocalePrefix } from '../composables/useLocalizedRouter'
 import { useI18n } from 'vue-i18n'
 import { orderStatusClass, orderStatusLabel } from '../utils/status'
 import { fulfillmentStatusLabel, fulfillmentTypeLabel } from '../utils/fulfillment'
@@ -443,6 +444,7 @@ import { toast } from '../composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
+const { push: lPush } = useLocalizedRouter()
 const { confirm: showConfirm } = useConfirmDialog()
 const appStore = useAppStore()
 const { t } = useI18n()
@@ -738,7 +740,7 @@ const fulfillmentDeliveryLines = (fulfillment: any) => {
 
 onMounted(() => {
   if (!route.params.order_no) {
-    router.push('/me/orders')
+    void lPush('/me/orders')
     return
   }
   loadOrder()

@@ -150,6 +150,7 @@ import { useUserAuthStore } from '../../stores/userAuth'
 import { useI18n } from 'vue-i18n'
 import { debounceAsync } from '../../utils/debounce'
 import { useAppStore } from '../../stores/app'
+import { addLocalePrefix } from '../../composables/useLocalizedRouter'
 import type { CaptchaPayload } from '../../api'
 import ImageCaptcha from '../../components/captcha/ImageCaptcha.vue'
 import TurnstileCaptcha from '../../components/captcha/TurnstileCaptcha.vue'
@@ -268,7 +269,7 @@ const performReset = async () => {
       code: code.value,
       new_password: newPassword.value
     })
-    router.push('/auth/login')
+    void router.push(addLocalePrefix('/auth/login', appStore.locale))
   } catch (err: any) {
     error.value = err.message || t('auth.forgot.errors.resetFailed')
   }

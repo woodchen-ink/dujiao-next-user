@@ -104,6 +104,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserAuthStore } from '../../stores/userAuth'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '../../stores/app'
+import { addLocalePrefix } from '../../composables/useLocalizedRouter'
 import { useTelegramMiniAppStore } from '../../stores/telegramMiniApp'
 import { buildTelegramMiniAppEntryLink, isTelegramUrlEnvironment, openTelegramCompatibleLink } from '../../utils/telegramMiniApp'
 import type { TelegramAuthPayload } from '../../api'
@@ -143,7 +144,9 @@ const miniAppLoginAttempted = ref(false)
 const attemptingMiniAppLogin = ref(false)
 
 const redirectAfterLogin = () => {
-  const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/me/orders'
+  const redirect = typeof route.query.redirect === 'string'
+    ? route.query.redirect
+    : addLocalePrefix('/me/orders', appStore.locale)
   return router.push(redirect)
 }
 

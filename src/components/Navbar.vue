@@ -232,6 +232,7 @@ import { useCartStore } from '../stores/cart'
 import { useUserAuthStore } from '../stores/userAuth'
 import { useTheme } from '../utils/theme'
 import { SunIcon, MoonIcon } from '@heroicons/vue/24/outline'
+import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 
 const { t, locale } = useI18n()
 const appStore = useAppStore()
@@ -372,10 +373,11 @@ const toggleLangMenu = () => {
   showLangMenu.value = !showLangMenu.value
 }
 
+const { switchLocale } = useLocalizedRouter()
+
 const changeLanguage = (langCode: string) => {
-  appStore.setLocale(langCode)
-  locale.value = langCode
   showLangMenu.value = false
+  void switchLocale(langCode)
 }
 
 const handleScroll = () => {

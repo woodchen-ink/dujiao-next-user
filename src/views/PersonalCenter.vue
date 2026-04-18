@@ -208,7 +208,7 @@
               <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <h3 class="text-lg font-bold theme-text-primary">{{ t('personalCenter.overview.recentOrdersTitle') }}</h3>
                 <router-link
-                  to="/me/orders"
+                  :to="addLocalePrefix('/me/orders', appStore.locale)"
                   class="inline-flex items-center rounded-full border theme-btn-ghost px-3 py-1 text-xs font-semibold"
                 >
                   {{ t('personalCenter.overview.viewAllOrders') }}
@@ -246,14 +246,14 @@
                         {{ statusLabel(order.status) }}
                       </span>
                       <router-link
-                        :to="`/orders/${order.order_no}`"
+                        :to="addLocalePrefix(`/orders/${order.order_no}`, appStore.locale)"
                         class="rounded-lg border theme-btn-secondary px-3 py-1.5 text-xs font-medium"
                       >
                         {{ t('orders.viewDetails') }}
                       </router-link>
                       <router-link
                         v-if="order.status === 'pending_payment'"
-                        :to="`/pay?order_no=${order.order_no}`"
+                        :to="addLocalePrefix(`/pay?order_no=${order.order_no}`, appStore.locale)"
                         class="rounded-lg theme-btn-primary px-3 py-1.5 text-xs font-bold transition-colors"
                       >
                         {{ t('orders.payNow') }}
@@ -281,7 +281,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, type Component } from 'vue'
-import { useRouter } from 'vue-router'
+import { useLocalizedRouter, addLocalePrefix } from '../composables/useLocalizedRouter'
+import { useAppStore } from '../stores/app'
 import { useI18n } from 'vue-i18n'
 import { HomeIcon, ShoppingBagIcon, WalletIcon, GiftIcon, ShieldCheckIcon, UserCircleIcon, MegaphoneIcon, KeyIcon } from '@heroicons/vue/24/outline'
 import { getImageUrl } from '../utils/image'
@@ -302,7 +303,8 @@ const props = withDefaults(defineProps<{ section?: PersonalSection }>(), {
   section: 'overview',
 })
 
-const router = useRouter()
+const { push: lPush } = useLocalizedRouter()
+const appStore = useAppStore()
 const { t, locale } = useI18n()
 const userProfileStore = useUserProfileStore()
 
@@ -339,7 +341,7 @@ const displayInitial = computed(() => {
 })
 
 const switchSection = (section: PersonalSection) => {
-  router.push(sectionRouteMap[section])
+  void lPush(sectionRouteMap[section])
 }
 
 const statusLabel = (status?: string) => orderStatusLabel(t, status)

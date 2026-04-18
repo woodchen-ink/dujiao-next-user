@@ -103,10 +103,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import { useProductList } from '../composables/useProductList'
+import { useLocalized } from '../composables/useProduct'
+import { useAppStore } from '../stores/app'
+import { buildCategoryPath } from '../utils/category'
 import ProductCard from '../components/ProductCard.vue'
 import ProductQuickBuy from '../components/ProductQuickBuy.vue'
 import CategorySidebar from '../components/CategorySidebar.vue'
@@ -114,6 +118,8 @@ import PaginationNav from '../components/PaginationNav.vue'
 
 const { push: lPush } = useLocalizedRouter()
 const { t } = useI18n()
+const appStore = useAppStore()
+const { getLocalizedText } = useLocalized()
 
 const {
   loading,
@@ -125,6 +131,7 @@ const {
   showFilterDrawer,
   expandedParentIds,
   categoryGroups,
+  categoryMap,
   selectCategory,
   toggleParentCategory,
   changePage,
@@ -132,6 +139,24 @@ const {
   initialize,
   cleanup,
 } = useProductList({ pageSize: 12, homeRouteName: 'products' })
+
+// 当前选中分类路径，二级分类显示 "一级 / 二级"
+const selectedCategoryName = computed(() => {
+  if (!selectedCategory.value) return ''
+  const cat = categoryMap.value.get(selectedCategory.value)
+  return buildCategoryPath(cat, categoryMap.value, getLocalizedText)
+})
+
+const pageTitle = computed(() => {
+  const siteName = String(appStore.config?.brand?.site_name || '').trim()
+  const catName = selectedCategoryName.value
+  const base = catName || t('nav.products')
+  return siteName ? `${base} - ${siteName}` : base
+})
+
+useHead({
+  title: () => pageTitle.value,
+})
 
 const quickBuyProduct = ref<any>(null)
 const quickBuyVisible = ref(false)

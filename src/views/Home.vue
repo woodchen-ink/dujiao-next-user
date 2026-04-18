@@ -204,12 +204,14 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useLocalizedRouter } from '../composables/useLocalizedRouter'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { postAPI, productAPI } from '../api'
 import { getImageUrl } from '../utils/image'
 import { useLocalized } from '../composables/useProduct'
 import { useProductList } from '../composables/useProductList'
 import { useProductListGroups } from '../composables/useProductListGroups'
 import { useAppStore } from '../stores/app'
+import { buildCategoryPath } from '../utils/category'
 import ProductCard from '../components/ProductCard.vue'
 import ProductListItem from '../components/ProductListItem.vue'
 import ProductQuickBuy from '../components/ProductQuickBuy.vue'
@@ -261,6 +263,19 @@ const {
 } = useProductList({ pageSize: 20, homeRouteName: 'home' })
 
 const listProductGroups = useProductListGroups(listProducts, listCategoryMap)
+
+// list 模式下，分类页动态 title（一级/二级 - 站点名）
+const listCategoryPageTitle = computed(() => {
+  if (templateMode.value !== 'list') return undefined
+  if (!listSelectedCategory.value) return undefined
+  const cat = listCategoryMap.value.get(listSelectedCategory.value)
+  const catName = buildCategoryPath(cat, listCategoryMap.value, getLocalizedText)
+  if (!catName) return undefined
+  const siteName = String(appStore.config?.brand?.site_name || '').trim()
+  return siteName ? `${catName} - ${siteName}` : catName
+})
+
+useHead({ title: () => listCategoryPageTitle.value })
 
 // ==================== Card Mode ====================
 // Format post publish dates for the latest content cards.

@@ -148,10 +148,10 @@ const selectedCategoryName = computed(() => {
 })
 
 const pageTitle = computed(() => {
-  const siteName = String(appStore.config?.brand?.site_name || '').trim()
   const catName = selectedCategoryName.value
-  const base = catName || t('nav.products')
-  return siteName ? `${base} - ${siteName}` : base
+  if (!catName) return undefined
+  const siteName = String(appStore.config?.brand?.site_name || '').trim()
+  return siteName ? `${catName} - ${siteName}` : catName
 })
 
 useHead({

@@ -38,8 +38,10 @@ export function useProductListGroups(
           if (parentId > 0) {
             const parentEntry = catMap.get(parentId)
             if (parentEntry) {
-              groupCatId = parentEntry.id
-              groupName = getLocalizedText(parentEntry.name)
+              groupCatId = directCatId
+              const parentName = getLocalizedText(parentEntry.name)
+              const selfName = getLocalizedText(catEntry.name)
+              groupName = parentName && selfName ? `${parentName} / ${selfName}` : (selfName || parentName)
               groupIcon = parentEntry.icon ?? null
             }
           }

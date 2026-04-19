@@ -4,7 +4,7 @@ import { createI18n } from 'vue-i18n'
 const messages = {
     'zh-CN': {
         common: {
-            siteName: 'CZL Store',
+            siteName: 'Sunai Store',
             loading: '加载中...',
             error: '错误',
             success: '成功',
@@ -147,8 +147,8 @@ const messages = {
         },
         about: {
             title: '关于我们',
-            subtitle: '了解 CZL Store',
-            introduction: 'CZL Store（D&N）是一个数字商品在线商城，主要提供账号类与卡密类商品。站点支持会员购买与游客下单，并提供自动交付与人工处理两种交付方式。',
+            subtitle: '了解 Sunai Store',
+            introduction: 'Sunai Store（D&N）是一个数字商品在线商城，主要提供账号类与卡密类商品。站点支持会员购买与游客下单，并提供自动交付与人工处理两种交付方式。',
             ourServices: '我们的服务',
             service1: '账号与数字商品在线选购',
             service2: '分类检索与商品详情展示',
@@ -982,7 +982,7 @@ const messages = {
     },
     'zh-TW': {
         common: {
-            siteName: 'CZL Store',
+            siteName: 'Sunai Store',
             loading: '載入中...',
             error: '錯誤',
             success: '成功',
@@ -1164,8 +1164,8 @@ const messages = {
         },
         about: {
             title: '關於我們',
-            subtitle: '了解 CZL Store',
-            introduction: 'CZL Store（D&N）是一個數位商品線上商城，主要提供帳號類與卡密類商品。站點支援會員購買與訪客下單，並提供自動交付與人工處理兩種交付方式。',
+            subtitle: '了解 Sunai Store',
+            introduction: 'Sunai Store（D&N）是一個數位商品線上商城，主要提供帳號類與卡密類商品。站點支援會員購買與訪客下單，並提供自動交付與人工處理兩種交付方式。',
             ourServices: '我們的服務',
             service1: '帳號與數位商品線上選購',
             service2: '分類檢索與商品詳情展示',
@@ -1960,7 +1960,7 @@ const messages = {
     },
     'en-US': {
         common: {
-            siteName: 'CZL Store',
+            siteName: 'Sunai Store',
             loading: 'Loading...',
             error: 'Error',
             success: 'Success',
@@ -2142,8 +2142,8 @@ const messages = {
         },
         about: {
             title: 'About Us',
-            subtitle: 'About CZL Store',
-            introduction: 'CZL Store is an online digital goods marketplace focused on account-based and code-based products. The site supports both member checkout and guest checkout, with auto and manual fulfillment options.',
+            subtitle: 'About Sunai Store',
+            introduction: 'Sunai Store is an online digital goods marketplace focused on account-based and code-based products. The site supports both member checkout and guest checkout, with auto and manual fulfillment options.',
             ourServices: 'Our Services',
             service1: 'Account and digital product shopping',
             service2: 'Category search and product detail display',

@@ -162,7 +162,7 @@ const { t } = useI18n()
 
 const brandSiteName = computed(() => {
   const siteName = String(appStore.config?.brand?.site_name || '').trim()
-  return siteName !== '' ? siteName : 'CZL Store'
+  return siteName !== '' ? siteName : 'Sunai Store'
 })
 
 const emailVerificationEnabled = computed(() => appStore.config?.email_verification_enabled !== false)

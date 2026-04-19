@@ -1,6 +1,6 @@
-# CZL Store User Web
+# Sunai Store User Web
 
-CZL Store User Web is the customer-facing frontend for browsing products, placing orders, and completing payments.
+Sunai Store User Web is the customer-facing frontend for browsing products, placing orders, and completing payments.
 
 ## Tech Stack
 

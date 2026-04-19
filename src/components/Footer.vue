@@ -42,7 +42,7 @@ const config = computed(() => appStore.config)
 
 const brandSiteName = computed(() => {
   const siteName = config.value?.brand?.site_name
-  return typeof siteName === 'string' && siteName.trim() ? siteName.trim() : 'CZL Store'
+  return typeof siteName === 'string' && siteName.trim() ? siteName.trim() : 'Sunai Store'
 })
 
 const footerLinks = computed(() => {

@@ -361,7 +361,7 @@ const cartCount = computed(() => cartStore.totalItems)
 
 const brandSiteName = computed(() => {
   const text = String(appStore.config?.brand?.site_name || '').trim()
-  return text !== '' ? text : 'CZL Store'
+  return text !== '' ? text : 'Sunai Store'
 })
 
 const toggleMobileMenu = () => {
